@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { categories, products, type Product } from "@/lib/catalog";
 
-function ProductVisual({ product, large = false }: { product: Product; large?: boolean }) {
+type PublicReview = { id: number; customerName: string; rating: number; title: string; text: string; mediaUrl: string; createdAt: string };
+type CatalogState = { productId: number; stock: number; lowStockThreshold: number; rating: number; reviewCount: number; reviews: PublicReview[]; media: { id: number; type: "image" | "video"; url: string; alt: string }[] };
+
+function ProductVisual({ product, large = false, state }: { product: Product; large?: boolean; state?: CatalogState }) {
+  const image = state?.media.find((media) => media.type === "image");
+  if (image) return <div className={`product-visual product-photo ${large ? "product-visual--large" : ""}`}><img src={image.url} alt={image.alt || product.name} /></div>;
   return (
     <div className={`product-visual photo-pending ${large ? "product-visual--large" : ""}`} style={{ "--shade": product.shade, "--accent": product.accent } as React.CSSProperties}>
       <span className="photo-monogram">AQ</span>
@@ -22,6 +27,13 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [selected, setSelected] = useState<Product | null>(null);
   const [toast, setToast] = useState("");
+  const [catalogState, setCatalogState] = useState<CatalogState[]>([]);
+  const [review, setReview] = useState({ customerName: "", rating: "5", title: "", text: "", mediaUrl: "" });
+
+  useEffect(() => {
+    const loadCatalog = async () => { const response = await fetch("/api/catalog", { cache: "no-store" }); const data = await response.json() as { catalog?: CatalogState[] }; if (response.ok) setCatalogState(data.catalog ?? []); };
+    void loadCatalog(); const timer = window.setInterval(() => void loadCatalog(), 30_000); return () => window.clearInterval(timer);
+  }, []);
 
   const filtered = useMemo(() => products.filter((product) => {
     const matchesQuery = `${product.name} ${product.category} ${product.subtitle} ${product.concern}`.toLowerCase().includes(query.toLowerCase());
@@ -29,6 +41,9 @@ export default function Home() {
   }), [query, category]);
 
   const addToCart = (product: Product) => {
+    const state = catalogState.find((item) => item.productId === product.id);
+    const alreadyInCart = cart.filter((id) => id === product.id).length;
+    if (!state || state.stock <= alreadyInCart) { setToast(state?.stock ? `Only ${state.stock} unit(s) available` : `${product.name} is out of stock`); setTimeout(() => setToast(""), 2200); return; }
     setCart((items) => [...items, product.id]);
     setToast(`${product.name} added to your bag`);
     setTimeout(() => setToast(""), 2200);
@@ -41,6 +56,15 @@ export default function Home() {
     setCategory(nextCategory);
     document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
     setMenuOpen(false);
+  };
+
+  const submitReview = async (event: FormEvent) => {
+    event.preventDefault(); if (!selected) return;
+    const response = await fetch("/api/reviews", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ productId: selected.id, ...review }) });
+    const data = await response.json() as { error?: string; message?: string };
+    setToast(response.ok ? data.message ?? "Review submitted for approval" : data.error ?? "Unable to submit review");
+    if (response.ok) setReview({ customerName: "", rating: "5", title: "", text: "", mediaUrl: "" });
+    setTimeout(() => setToast(""), 3000);
   };
 
   return (
@@ -84,7 +108,7 @@ export default function Home() {
           <div className="hero-leaf hero-leaf--right" />
           <div className="stone stone--back" />
           <div className="stone stone--front" />
-          <ProductVisual product={products[0]} large />
+          <ProductVisual product={products[0]} state={catalogState.find((item) => item.productId === products[0].id)} large />
           <div className="hero-note"><b>01</b><span>Launch hero<br />body wash</span></div>
         </div>
       </section>
@@ -105,10 +129,10 @@ export default function Home() {
               <div className="product-image" onClick={() => setSelected(product)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setSelected(product)}>
                 {product.badge && <span className="badge">{product.badge}</span>}
                 <button className={`heart ${liked.includes(product.id) ? "heart--liked" : ""}`} aria-label={`Save ${product.name}`} onClick={(event) => { event.stopPropagation(); setLiked((items) => items.includes(product.id) ? items.filter((id) => id !== product.id) : [...items, product.id]); }}>♥</button>
-                <ProductVisual product={product} />
+                <ProductVisual product={product} state={catalogState.find((item) => item.productId === product.id)} />
                 <span className="quick-view">Quick view</span>
               </div>
-              <div className="product-info"><div className="rating"><span>★★★★★</span> {product.rating} ({product.reviews})</div><small>{product.category} · {product.size}</small><h3>{product.name}</h3><p>{product.subtitle}</p><p className="concern">For {product.concern}</p><div className="price"><b>₹{product.price}</b>{product.oldPrice && <del>₹{product.oldPrice}</del>}<span>incl. taxes</span></div><em className="delivery-note">FREE delivery on eligible orders</em><button onClick={() => addToCart(product)}>Add to cart <span>＋</span></button></div>
+              {(() => { const state = catalogState.find((item) => item.productId === product.id); const inStock = Boolean(state && state.stock > 0); return <div className="product-info"><div className="rating"><span>{state?.reviewCount ? "★★★★★" : "☆☆☆☆☆"}</span> {state?.reviewCount ? `${state.rating} (${state.reviewCount})` : "No reviews yet"}</div><small>{product.category} · {product.size}</small><h3>{product.name}</h3><p>{product.subtitle}</p><p className="concern">For {product.concern}</p><div className="price"><b>₹{product.price}</b>{product.oldPrice && <del>₹{product.oldPrice}</del>}<span>incl. taxes</span></div><em className={`stock-note ${!inStock ? "stock-note--out" : state && state.stock <= state.lowStockThreshold ? "stock-note--low" : ""}`}>{!state ? "Checking stock…" : !inStock ? "Out of stock" : state.stock <= state.lowStockThreshold ? `Only ${state.stock} remaining` : `In stock · ${state.stock} available`}</em><button disabled={!inStock} onClick={() => addToCart(product)}>{inStock ? "Add to cart" : "Unavailable"} <span>{inStock ? "＋" : "×"}</span></button></div>; })()}
             </article>
           ))}
         </div>
@@ -116,7 +140,7 @@ export default function Home() {
       </section>
 
       <section className="promise" id="story">
-        <div className="promise-art"><div className="arch"><ProductVisual product={products[3]} large /></div><span className="promise-seal">MADE WITH CARE<br />✦<br />FOR EVERY BODY</span></div>
+        <div className="promise-art"><div className="arch"><ProductVisual product={products[3]} state={catalogState.find((item) => item.productId === products[3].id)} large /></div><span className="promise-seal">MADE WITH CARE<br />✦<br />FOR EVERY BODY</span></div>
         <div className="promise-copy"><span className="kicker">THE ALPHA QUEEN PROMISE</span><h2>Simple shopping.<br /><em>Confident beauty.</em></h2><p>One focused cosmetics destination with clear ingredients, sizes, prices and prepaid checkout. Final claims and product details will be added only after each formula is approved.</p><ul><li><span>01</span><div><b>Transparent product pages</b><small>Ingredients, usage and warnings presented clearly.</small></div></li><li><span>02</span><div><b>Secure prepaid orders</b><small>Payment confirmation and order tracking in one place.</small></div></li><li><span>03</span><div><b>Made for Indian customers</b><small>Mobile-first shopping and WhatsApp support planned.</small></div></li></ul><button className="text-button" onClick={() => scrollToShop()}>Explore products →</button></div>
       </section>
 
@@ -129,7 +153,7 @@ export default function Home() {
 
       {toast && <div className="toast">✓ {toast}</div>}
       {cartOpen && <><button className="overlay" aria-label="Close cart" onClick={() => setCartOpen(false)} /><aside className="cart-drawer"><div className="drawer-head"><div><small>YOUR CART</small><h2>Shopping cart ({cart.length})</h2></div><button onClick={() => setCartOpen(false)}>×</button></div>{cartProducts.length === 0 ? <div className="cart-empty"><span>□</span><h3>Your cart is empty</h3><p>Explore Alpha Queen&apos;s launch collection.</p><button className="primary" onClick={() => { setCartOpen(false); scrollToShop(); }}>Start shopping</button></div> : <><div className="cart-items">{cartProducts.map((product, index) => <div className="cart-item" key={`${product.id}-${index}`}><ProductVisual product={product} /><div><small>{product.category} · {product.size}</small><b>{product.name}</b><p>₹{product.price}</p><button onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>Remove</button></div></div>)}</div><div className="cart-summary"><div><span>Subtotal</span><b>₹{cartTotal}</b></div><small>Prepaid orders only. Shipping will be calculated at checkout.</small><button onClick={() => { window.location.href = `/checkout?items=${cart.join(",")}`; }}>Continue with mobile number →</button></div></>}</aside></>}
-      {selected && <><button className="overlay" aria-label="Close product view" onClick={() => setSelected(null)} /><div className="modal"><button className="modal-close" onClick={() => setSelected(null)}>×</button><ProductVisual product={selected} large /><div className="modal-info"><span className="kicker">{selected.category}</span><h2>{selected.name}</h2><div className="rating"><span>★★★★★</span> {selected.rating} ({selected.reviews} preview ratings)</div><p>A launch-preview formula featuring {selected.subtitle.toLowerCase()}, designed for {selected.concern.toLowerCase()}. Final ingredients, directions and claims will be confirmed before sale.</p><ul><li>{selected.size} pack</li><li>Prepaid online order</li><li>Final label details coming soon</li></ul><div className="modal-price"><b>₹{selected.price}</b><small>{selected.size} · Inclusive of all taxes</small></div><button className="primary" onClick={() => { addToCart(selected); setSelected(null); }}>Add to cart →</button></div></div></>}
+      {selected && (() => { const state = catalogState.find((item) => item.productId === selected.id); const inStock = Boolean(state && state.stock > 0); return <><button className="overlay" aria-label="Close product view" onClick={() => setSelected(null)} /><div className="modal product-modal"><button className="modal-close" onClick={() => setSelected(null)}>×</button><div className="product-media-column"><ProductVisual product={selected} state={state} large />{state?.media.filter((media) => media.type === "video").map((media) => <video key={media.id} controls preload="metadata" src={media.url} />)}</div><div className="modal-info"><span className="kicker">{selected.category}</span><h2>{selected.name}</h2><div className="rating"><span>{state?.reviewCount ? "★★★★★" : "☆☆☆☆☆"}</span> {state?.reviewCount ? `${state.rating} (${state.reviewCount})` : "No approved reviews yet"}</div><p>A launch-preview formula featuring {selected.subtitle.toLowerCase()}, designed for {selected.concern.toLowerCase()}. Final ingredients, directions and claims will be confirmed before sale.</p><ul><li>{selected.size} pack</li><li>Prepaid online order</li><li>{!state ? "Checking stock" : !inStock ? "Out of stock" : state.stock <= state.lowStockThreshold ? `Only ${state.stock} remaining` : `${state.stock} available`}</li></ul><div className="modal-price"><b>₹{selected.price}</b><small>{selected.size} · Inclusive of all taxes</small></div><button className="primary" disabled={!inStock} onClick={() => { addToCart(selected); if (inStock) setSelected(null); }}>{inStock ? "Add to cart →" : "Out of stock"}</button><div className="approved-reviews"><h3>Customer reviews</h3>{state?.reviews.length ? state.reviews.map((item) => <article key={item.id}><b>{"★".repeat(item.rating)}{"☆".repeat(5 - item.rating)} {item.title}</b><p>{item.text}</p><small>{item.customerName}</small>{item.mediaUrl && <a href={item.mediaUrl} target="_blank" rel="noreferrer">View photo/video</a>}</article>) : <p>No approved customer reviews yet.</p>}</div><form className="review-form" onSubmit={submitReview}><h3>Write a review</h3><div><input required placeholder="Your name" value={review.customerName} onChange={(event) => setReview((current) => ({ ...current, customerName: event.target.value }))} /><select value={review.rating} onChange={(event) => setReview((current) => ({ ...current, rating: event.target.value }))}>{[5,4,3,2,1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}</select></div><input placeholder="Review title" value={review.title} onChange={(event) => setReview((current) => ({ ...current, title: event.target.value }))} /><textarea required minLength={10} placeholder="Share your experience" value={review.text} onChange={(event) => setReview((current) => ({ ...current, text: event.target.value }))} /><input type="url" placeholder="Optional photo/video URL" value={review.mediaUrl} onChange={(event) => setReview((current) => ({ ...current, mediaUrl: event.target.value }))} /><button>Submit for approval</button></form></div></div></>; })()}
     </main>
   );
 }

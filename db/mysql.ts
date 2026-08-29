@@ -73,4 +73,40 @@ async function initializeSchema() {
     INDEX idx_admin_sessions_expiry (expires_at),
     CONSTRAINT fk_admin_sessions_admin FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+  await db.query(`CREATE TABLE IF NOT EXISTS inventory (
+    product_id INT UNSIGNED PRIMARY KEY,
+    stock INT UNSIGNED NOT NULL DEFAULT 0,
+    low_stock_threshold INT UNSIGNED NOT NULL DEFAULT 5,
+    updated_at DATETIME(3) NOT NULL
+  ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+  await db.query(`CREATE TABLE IF NOT EXISTS product_media (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id INT UNSIGNED NOT NULL,
+    media_type ENUM('image','video') NOT NULL,
+    media_url VARCHAR(1200) NOT NULL,
+    alt_text VARCHAR(255) NOT NULL DEFAULT '',
+    sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+    created_at DATETIME(3) NOT NULL,
+    INDEX idx_product_media_product (product_id, sort_order)
+  ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+  await db.query(`CREATE TABLE IF NOT EXISTS reviews (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id INT UNSIGNED NOT NULL,
+    customer_name VARCHAR(100) NOT NULL,
+    rating TINYINT UNSIGNED NOT NULL,
+    title VARCHAR(160) NOT NULL DEFAULT '',
+    review_text TEXT NOT NULL,
+    media_url VARCHAR(1200) NOT NULL DEFAULT '',
+    status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    created_at DATETIME(3) NOT NULL,
+    INDEX idx_reviews_product_status (product_id, status, created_at)
+  ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+  const now = new Date();
+  for (let productId = 1; productId <= 8; productId += 1) {
+    await db.execute("INSERT IGNORE INTO inventory (product_id, stock, low_stock_threshold, updated_at) VALUES (?, 0, 5, ?)", [productId, now]);
+  }
 }

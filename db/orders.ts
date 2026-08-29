@@ -72,16 +72,24 @@ export function validateOrder(value: unknown): OrderInput {
 
 export async function createOrder(input: OrderInput): Promise<OrderRecord> {
   await ensureSchema();
+  if (input.source === "website") {
+    for (const item of input.items) {
+      const [inventoryRows] = await database().query<(RowDataPacket & { stock: number })[]>("SELECT stock FROM inventory WHERE product_id = ? LIMIT 1", [Number(item.id)]);
+      const stock = Number(inventoryRows[0]?.stock ?? 0);
+      if (stock < item.qty) throw new Error(`${item.name} has only ${stock} unit(s) in stock`);
+    }
+  }
   const id = `AQ-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
   const subtotal = input.items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = input.shipping ?? 0;
   const total = subtotal + shipping;
   const createdAt = new Date();
+  const initialStatus = input.paymentStatus === "paid" ? "confirmed" : "new";
   await database().execute(`INSERT INTO orders
     (id, source, status, customer_name, mobile, address_line1, address_line2, landmark, pincode, city, state, items_json, subtotal, shipping, total, payment_status, note, created_at)
-    VALUES (?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, input.source, input.customerName, input.mobile, input.addressLine1, input.addressLine2 ?? "", input.landmark ?? "", input.pincode, input.city, input.state, JSON.stringify(input.items), subtotal, shipping, total, input.paymentStatus ?? "pending", input.note ?? "", createdAt]);
-  return { ...input, id, status: "new", subtotal, shipping, total, createdAt: createdAt.toISOString() };
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, input.source, initialStatus, input.customerName, input.mobile, input.addressLine1, input.addressLine2 ?? "", input.landmark ?? "", input.pincode, input.city, input.state, JSON.stringify(input.items), subtotal, shipping, total, input.paymentStatus ?? "pending", input.note ?? "", createdAt]);
+  return { ...input, id, status: initialStatus, subtotal, shipping, total, createdAt: createdAt.toISOString() };
 }
 
 export async function listOrders(): Promise<OrderRecord[]> {
@@ -99,7 +107,42 @@ export async function listOrders(): Promise<OrderRecord[]> {
 export async function updateOrderStatus(id: string, status: string) {
   if (!("new confirmed packed shipped delivered cancelled".split(" ")).includes(status)) throw new Error("Invalid order status");
   await ensureSchema();
+  if (["confirmed", "packed", "shipped", "delivered"].includes(status)) {
+    const [rows] = await database().query<(RowDataPacket & { payment_status: string })[]>("SELECT payment_status FROM orders WHERE id = ? LIMIT 1", [id]);
+    if (!rows[0]) throw new Error("Order not found");
+    if (rows[0].payment_status !== "paid") throw new Error("Confirm payment before moving this order forward");
+  }
   await database().execute("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+}
+
+export async function confirmOrderPayment(id: string) {
+  if (!id.startsWith("AQ-")) throw new Error("Invalid order id");
+  await ensureSchema();
+  const connection = await database().getConnection();
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.query<OrderRow[]>("SELECT * FROM orders WHERE id = ? FOR UPDATE", [id]);
+    const order = rows[0];
+    if (!order) throw new Error("Order not found");
+    if (order.payment_status === "paid") { await connection.commit(); return; }
+    if (order.source === "website") {
+      const items = JSON.parse(order.items_json) as OrderItem[];
+      for (const item of items) {
+        const productId = Number(item.id);
+        const [inventoryRows] = await connection.query<(RowDataPacket & { stock: number })[]>("SELECT stock FROM inventory WHERE product_id = ? FOR UPDATE", [productId]);
+        const stock = Number(inventoryRows[0]?.stock ?? 0);
+        if (stock < item.qty) throw new Error(`${item.name} has only ${stock} unit(s) in stock`);
+      }
+      for (const item of items) {
+        await connection.execute("UPDATE inventory SET stock = stock - ?, updated_at = ? WHERE product_id = ?", [item.qty, new Date(), Number(item.id)]);
+      }
+    }
+    await connection.execute("UPDATE orders SET payment_status = 'paid', status = 'confirmed' WHERE id = ?", [id]);
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally { connection.release(); }
 }
 
 export async function deleteOrder(id: string) {
