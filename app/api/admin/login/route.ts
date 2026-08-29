@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { loginAdmin, safeReturnTo } from "@/db/admin-auth";
+import { relativeRedirect } from "../relative-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -8,11 +8,11 @@ export async function POST(request: Request) {
   const returnTo = safeReturnTo(form.get("returnTo"));
   try {
     await loginAdmin(String(form.get("username") ?? ""), String(form.get("password") ?? ""));
-    return NextResponse.redirect(new URL(returnTo, request.url), 303);
+    return relativeRedirect(returnTo);
   } catch {
-    const url = new URL("/admin/login", request.url);
-    url.searchParams.set("error", "Invalid username or password");
-    url.searchParams.set("returnTo", returnTo);
-    return NextResponse.redirect(url, 303);
+    return relativeRedirect("/admin/login", {
+      error: "Invalid username or password",
+      returnTo,
+    });
   }
 }
