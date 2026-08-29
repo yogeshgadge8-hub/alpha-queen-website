@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://alphaqueenofficial.com"),
   title: "Alpha Queen Cosmetics — Everyday Beauty, Made for Your Glow",
   description: "Shop Alpha Queen body wash, face wash, body scrub and everyday cosmetic essentials.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },

@@ -48,7 +48,7 @@ export default function CheckoutPage() {
     finally { setSubmitting(false); }
   };
 
-  if (orderId) return <main className="checkout-page"><section className="checkout-success"><span>✓</span><small>ORDER SAVED</small><h1>Thank you.</h1><p>Your preview order number is <b>{orderId}</b>. It is now visible in the Alpha Queen order desk.</p><div><a className="primary" href="/admin/orders">Open order desk</a><a href="/">Back to store</a></div><em>Payment is not collected in this preview.</em></section></main>;
+  if (orderId) return <main className="checkout-page"><section className="checkout-success"><span>✓</span><small>ORDER SAVED</small><h1>Thank you.</h1><p>Your order number is <b>{orderId}</b>. Save it for future support.</p><div><a className="primary" href="/">Continue shopping</a></div><em>Payment gateway is not connected yet, so payment was not collected.</em></section></main>;
 
   return (
     <main className="checkout-page">
