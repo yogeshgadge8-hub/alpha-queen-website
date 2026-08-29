@@ -127,7 +127,7 @@ export default function ProfitCalculator() {
           <div className="calc-divider" />
           <div className="calc-panel-head"><div><span>02</span><h2>Product & delivery costs</h2></div></div>
           <div className="calc-grid calc-grid--three">
-            <NumberField label="Product landed cost" value={inputs.productCost} onChange={(value) => update("productCost", value)} hint="Supplier + inward freight" />
+            <NumberField label="Purchase price / product cost" value={inputs.productCost} onChange={(value) => update("productCost", value)} hint="Supplier purchase price + inward freight per unit" />
             <NumberField label="Packaging cost" value={inputs.packaging} onChange={(value) => update("packaging", value)} hint="Bottle wrap, box, label" />
             <NumberField label="Actual courier cost" value={inputs.courierCost} onChange={(value) => update("courierCost", value)} hint="What courier charges you" />
             <NumberField label="Advertising/order" value={inputs.adsCost} onChange={(value) => update("adsCost", value)} hint="Ad spend ÷ paid orders" />
@@ -158,7 +158,7 @@ export default function ProfitCalculator() {
             <div className="slip-total"><span>Customer pays</span><b>{money(result.customerPays)}</b></div>
             <div><span>GST included ({inputs.gstRate}%)</span><b>− {money(result.gstCollected)}</b></div>
             <div><span>Revenue before GST</span><b>{money(result.revenueBeforeGst)}</b></div>
-            <div><span>Product + packing + courier</span><b>− {money(inputs.productCost + inputs.packaging + inputs.courierCost)}</b></div>
+            <div><span>Purchase price + packing + courier</span><b>− {money(inputs.productCost + inputs.packaging + inputs.courierCost)}</b></div>
             <div><span>Gateway fee + GST</span><b>− {money(result.gatewayFee + result.gatewayFeeGst)}</b></div>
             {result.platformFee > 0 && <div><span>Platform commission</span><b>− {money(result.platformFee)}</b></div>}
             <div><span>Ads + agent + other</span><b>− {money(inputs.adsCost + inputs.agentCost + inputs.otherCost)}</b></div>

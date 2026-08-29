@@ -1,44 +1,49 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { products } from "@/lib/catalog";
+import type { Product } from "@/lib/catalog";
 
 type Media = { id: number; type: "image" | "video"; url: string; alt: string };
 type CatalogState = { productId: number; stock: number; lowStockThreshold: number; rating: number; reviewCount: number; media: Media[] };
 type Review = { id: number; productId: number; customerName: string; rating: number; title: string; text: string; mediaUrl: string; status: "pending" | "approved" | "rejected"; createdAt: string };
+type StockDraft = { stock: string; threshold: string; type: "image" | "video"; url: string };
+
+const emptyProduct: Omit<Product, "id" | "rating" | "reviews"> = { name: "", category: "", subtitle: "", price: 0, oldPrice: undefined, shade: "#eaded2", accent: "#6f4436", form: "pump", badge: "", size: "", concern: "", active: true };
+
+function ProductFields({ value, onChange }: { value: Omit<Product, "rating" | "reviews">; onChange: (patch: Partial<Product>) => void }) {
+  return <div className="product-editor-grid">
+    <label><span>Product name *</span><input value={value.name} onChange={(e) => onChange({ name: e.target.value })} /></label>
+    <label><span>Category *</span><input value={value.category} onChange={(e) => onChange({ category: e.target.value })} placeholder="Face Wash" /></label>
+    <label className="wide"><span>Subtitle / ingredients</span><input value={value.subtitle} onChange={(e) => onChange({ subtitle: e.target.value })} /></label>
+    <label><span>Selling price ₹ *</span><input type="number" min="0" value={value.price} onChange={(e) => onChange({ price: Number(e.target.value) })} /></label>
+    <label><span>Old price ₹</span><input type="number" min="0" value={value.oldPrice ?? ""} onChange={(e) => onChange({ oldPrice: e.target.value ? Number(e.target.value) : undefined })} /></label>
+    <label><span>Size</span><input value={value.size} onChange={(e) => onChange({ size: e.target.value })} placeholder="100 ml" /></label>
+    <label><span>Skin concern</span><input value={value.concern} onChange={(e) => onChange({ concern: e.target.value })} /></label>
+    <label><span>Pack type</span><select value={value.form} onChange={(e) => onChange({ form: e.target.value as Product["form"] })}><option value="pump">Pump</option><option value="tube">Tube</option><option value="jar">Jar</option></select></label>
+    <label><span>Badge</span><input value={value.badge ?? ""} onChange={(e) => onChange({ badge: e.target.value })} placeholder="New / Bestseller" /></label>
+    <label><span>Card colour</span><input type="color" value={value.shade} onChange={(e) => onChange({ shade: e.target.value })} /></label>
+    <label><span>Accent colour</span><input type="color" value={value.accent} onChange={(e) => onChange({ accent: e.target.value })} /></label>
+    <label className="product-active"><input type="checkbox" checked={value.active !== false} onChange={(e) => onChange({ active: e.target.checked })} /><span>Active on website</span></label>
+  </div>;
+}
 
 export default function CatalogAdminPage() {
-  const [catalog, setCatalog] = useState<CatalogState[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [drafts, setDrafts] = useState<Record<number, { stock: string; threshold: string; type: "image" | "video"; url: string }>>({});
-  const [message, setMessage] = useState("");
-
-  const load = useCallback(async () => {
-    const response = await fetch("/api/catalog?admin=1", { cache: "no-store" });
-    const data = await response.json() as { catalog?: CatalogState[]; reviews?: Review[]; error?: string };
-    if (!response.ok) { setMessage(data.error ?? "Unable to load catalog"); return; }
-    setCatalog(data.catalog ?? []); setReviews(data.reviews ?? []);
-    setDrafts((current) => Object.fromEntries((data.catalog ?? []).map((item) => [item.productId, current[item.productId] ?? { stock: String(item.stock), threshold: String(item.lowStockThreshold), type: "image", url: "" }])));
-  }, []);
-
+  const [products, setProducts] = useState<Product[]>([]); const [catalog, setCatalog] = useState<CatalogState[]>([]); const [reviews, setReviews] = useState<Review[]>([]);
+  const [drafts, setDrafts] = useState<Record<number, StockDraft>>({}); const [edits, setEdits] = useState<Record<number, Product>>({}); const [newProduct, setNewProduct] = useState(emptyProduct); const [message, setMessage] = useState("");
+  const load = useCallback(async () => { const response = await fetch("/api/catalog?admin=1", { cache: "no-store" }); const data = await response.json() as { products?: Product[]; catalog?: CatalogState[]; reviews?: Review[]; error?: string }; if (!response.ok) { setMessage(data.error ?? "Unable to load catalog"); return; } const nextProducts = data.products ?? []; setProducts(nextProducts); setCatalog(data.catalog ?? []); setReviews(data.reviews ?? []); setEdits(Object.fromEntries(nextProducts.map((p) => [p.id, p]))); setDrafts((current) => Object.fromEntries((data.catalog ?? []).map((item) => [item.productId, current[item.productId] ?? { stock: String(item.stock), threshold: String(item.lowStockThreshold), type: "image", url: "" }]))); }, []);
   useEffect(() => { void load(); }, [load]);
-  const draft = (productId: number) => drafts[productId] ?? { stock: "0", threshold: "5", type: "image" as const, url: "" };
-  const updateDraft = (productId: number, patch: Partial<ReturnType<typeof draft>>) => setDrafts((current) => ({ ...current, [productId]: { ...draft(productId), ...patch } }));
-
-  const saveStock = async (productId: number) => {
-    const value = draft(productId);
-    const response = await fetch("/api/catalog", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ productId, stock: value.stock, lowStockThreshold: value.threshold }) });
-    const data = await response.json() as { error?: string };
-    setMessage(response.ok ? "Stock updated" : data.error ?? "Unable to update stock"); if (response.ok) await load();
-  };
-  const addMedia = async (productId: number) => {
-    const value = draft(productId);
-    const response = await fetch("/api/catalog", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ productId, type: value.type, url: value.url, alt: products.find((product) => product.id === productId)?.name }) });
-    const data = await response.json() as { error?: string };
-    setMessage(response.ok ? "Media added" : data.error ?? "Unable to add media"); if (response.ok) { updateDraft(productId, { url: "" }); await load(); }
-  };
-  const removeMedia = async (id: number) => { await fetch("/api/catalog", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }); await load(); };
+  const draft = (id: number) => drafts[id] ?? { stock: "0", threshold: "5", type: "image" as const, url: "" };
+  const updateDraft = (id: number, patch: Partial<StockDraft>) => setDrafts((current) => ({ ...current, [id]: { ...draft(id), ...patch } }));
+  const request = async (method: "POST" | "PATCH" | "DELETE", body: unknown) => { const response = await fetch("/api/catalog", { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const data = await response.json() as { error?: string }; if (!response.ok) throw new Error(data.error ?? "Unable to save"); };
+  const create = async () => { try { await request("POST", { action: "product", product: newProduct }); setNewProduct(emptyProduct); setMessage("Product added. Stock starts at 0; add actual stock below."); await load(); } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to add product"); } };
+  const saveProduct = async (id: number) => { try { await request("PATCH", { action: "product", product: edits[id] }); setMessage("Product details updated on the website"); await load(); } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to update product"); } };
+  const saveStock = async (id: number) => { try { const d = draft(id); await request("PATCH", { productId: id, stock: d.stock, lowStockThreshold: d.threshold }); setMessage("Stock updated"); await load(); } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to update stock"); } };
+  const addMedia = async (id: number) => { try { const d = draft(id); await request("POST", { productId: id, type: d.type, url: d.url, alt: products.find((p) => p.id === id)?.name }); updateDraft(id, { url: "" }); setMessage("Product image/video added"); await load(); } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to add media"); } };
+  const removeMedia = async (id: number) => { await request("DELETE", { id }); await load(); };
   const moderate = async (id: number, status: "approved" | "rejected") => { await fetch("/api/reviews", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, status }) }); await load(); };
 
-  return <main className="catalog-admin-page"><header className="orders-header"><div><a href="/" className="orders-logo">ALPHA QUEEN<span>catalog desk</span></a><p>Real stock, product images/videos and customer review moderation.</p></div><div><a href="/admin/orders">Order desk</a><a href="/">View store</a></div></header>{message && <div className="catalog-message">{message}</div>}<section className="catalog-admin-shell"><div className="catalog-admin-title"><small>LIVE INVENTORY</small><h1>Stock & product media</h1><p>Stock starts at zero. Enter actual physical units only. Website shows In stock, Only X remaining or Out of stock from this data.</p></div><div className="catalog-admin-grid">{products.map((product) => { const state = catalog.find((item) => item.productId === product.id); const value = draft(product.id); return <article className="catalog-admin-card" key={product.id}><div><small>{product.category} · {product.size}</small><h2>{product.name}</h2><span>{state?.reviewCount ?? 0} approved review(s) · {state?.rating || "No rating"}</span></div><div className="stock-editor"><label><span>Available stock</span><input type="number" min="0" value={value.stock} onChange={(event) => updateDraft(product.id, { stock: event.target.value })} /></label><label><span>Low-stock warning</span><input type="number" min="0" value={value.threshold} onChange={(event) => updateDraft(product.id, { threshold: event.target.value })} /></label><button onClick={() => void saveStock(product.id)}>Save stock</button></div><div className="media-editor"><select value={value.type} onChange={(event) => updateDraft(product.id, { type: event.target.value as "image" | "video" })}><option value="image">Image URL</option><option value="video">Video URL</option></select><input type="url" placeholder="https://..." value={value.url} onChange={(event) => updateDraft(product.id, { url: event.target.value })} /><button onClick={() => void addMedia(product.id)}>Add</button></div>{state?.media.map((media) => <div className="media-row" key={media.id}><span>{media.type}: {media.url}</span><button onClick={() => void removeMedia(media.id)}>Remove</button></div>)}</article>; })}</div><div className="catalog-admin-title review-admin-title"><small>CUSTOMER REVIEWS</small><h1>Approve before publishing</h1><p>New reviews stay pending. Only approved reviews affect the public rating.</p></div><div className="review-admin-list">{reviews.length === 0 ? <p>No reviews submitted yet.</p> : reviews.map((review) => <article key={review.id}><div><b>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</b><span>{review.status}</span></div><h3>{review.title || "Customer review"}</h3><p>{review.text}</p><small>{review.customerName} · {products.find((product) => product.id === review.productId)?.name} · {new Date(review.createdAt).toLocaleString("en-IN")}</small>{review.mediaUrl && <a href={review.mediaUrl} target="_blank" rel="noreferrer">View review media</a>}<footer><button onClick={() => void moderate(review.id, "approved")}>Approve</button><button onClick={() => void moderate(review.id, "rejected")}>Reject</button></footer></article>)}</div></section></main>;
+  return <main className="catalog-admin-page"><header className="orders-header"><div><a href="/" className="orders-logo">ALPHA QUEEN<span>catalog desk</span></a><p>Add/edit products, stock, images, videos and reviews.</p></div><div><a href="/admin/orders">Order desk</a><a href="/profit-calculator">Profit calculator</a><a href="/">View store</a></div></header>{message && <div className="catalog-message">{message}</div>}
+    <section className="catalog-admin-shell"><div className="catalog-admin-title"><small>ADD NEW PRODUCT</small><h1>Create a product</h1><p>Fill the details, save it, then set actual stock and add image/video URLs.</p></div><article className="catalog-admin-card new-product-card"><ProductFields value={{ id: 0, ...newProduct }} onChange={(patch) => setNewProduct((current) => ({ ...current, ...patch }))} /><button className="save-product-button" onClick={() => void create()}>Add product</button></article>
+      <div className="catalog-admin-title product-list-title"><small>EDIT PRODUCTS</small><h1>Products, stock & media</h1><p>Inactive products remain in admin and old orders, but disappear from the customer website.</p></div><div className="catalog-admin-grid">{products.map((product) => { const state = catalog.find((item) => item.productId === product.id); const d = draft(product.id); const edit = edits[product.id] ?? product; return <article className="catalog-admin-card" key={product.id}><div><small>PRODUCT #{product.id}</small><h2>{product.name}</h2><span>{product.active === false ? "Hidden" : "Live"} · {state?.reviewCount ?? 0} approved review(s)</span></div><ProductFields value={edit} onChange={(patch) => setEdits((current) => ({ ...current, [product.id]: { ...edit, ...patch } }))} /><button className="save-product-button" onClick={() => void saveProduct(product.id)}>Save product details</button><div className="stock-editor"><label><span>Available stock</span><input type="number" min="0" value={d.stock} onChange={(e) => updateDraft(product.id, { stock: e.target.value })} /></label><label><span>Low-stock warning</span><input type="number" min="0" value={d.threshold} onChange={(e) => updateDraft(product.id, { threshold: e.target.value })} /></label><button onClick={() => void saveStock(product.id)}>Save stock</button></div><div className="media-editor"><select value={d.type} onChange={(e) => updateDraft(product.id, { type: e.target.value as "image" | "video" })}><option value="image">Image URL</option><option value="video">Video URL</option></select><input type="url" placeholder="Paste https:// image or video link" value={d.url} onChange={(e) => updateDraft(product.id, { url: e.target.value })} /><button onClick={() => void addMedia(product.id)}>Add media</button></div>{state?.media.map((media) => <div className="media-row" key={media.id}><span>{media.type}: {media.url}</span><button onClick={() => void removeMedia(media.id)}>Remove</button></div>)}</article>; })}</div>
+      <div className="catalog-admin-title review-admin-title"><small>CUSTOMER REVIEWS</small><h1>Approve before publishing</h1><p>New reviews stay pending. Only approved reviews affect the public rating.</p></div><div className="review-admin-list">{reviews.length === 0 ? <p>No reviews submitted yet.</p> : reviews.map((review) => <article key={review.id}><div><b>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</b><span>{review.status}</span></div><h3>{review.title || "Customer review"}</h3><p>{review.text}</p><small>{review.customerName} · {products.find((p) => p.id === review.productId)?.name ?? `Product #${review.productId}`} · {new Date(review.createdAt).toLocaleString("en-IN")}</small>{review.mediaUrl && <a href={review.mediaUrl} target="_blank" rel="noreferrer">View review media</a>}<footer><button onClick={() => void moderate(review.id, "approved")}>Approve</button><button onClick={() => void moderate(review.id, "rejected")}>Reject</button></footer></article>)}</div></section></main>;
 }

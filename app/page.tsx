@@ -28,17 +28,18 @@ export default function Home() {
   const [selected, setSelected] = useState<Product | null>(null);
   const [toast, setToast] = useState("");
   const [catalogState, setCatalogState] = useState<CatalogState[]>([]);
+  const [storeProducts, setStoreProducts] = useState<Product[]>(products);
   const [review, setReview] = useState({ orderId: "", mobile: "", customerName: "", rating: "5", title: "", text: "", mediaUrl: "" });
 
   useEffect(() => {
-    const loadCatalog = async () => { const response = await fetch("/api/catalog", { cache: "no-store" }); const data = await response.json() as { catalog?: CatalogState[] }; if (response.ok) setCatalogState(data.catalog ?? []); };
+    const loadCatalog = async () => { const response = await fetch("/api/catalog", { cache: "no-store" }); const data = await response.json() as { products?: Product[]; catalog?: CatalogState[] }; if (response.ok) { setStoreProducts(data.products ?? []); setCatalogState(data.catalog ?? []); } };
     void loadCatalog(); const timer = window.setInterval(() => void loadCatalog(), 30_000); return () => window.clearInterval(timer);
   }, []);
 
-  const filtered = useMemo(() => products.filter((product) => {
+  const filtered = useMemo(() => storeProducts.filter((product) => {
     const matchesQuery = `${product.name} ${product.category} ${product.subtitle} ${product.concern}`.toLowerCase().includes(query.toLowerCase());
     return matchesQuery && (category === "All" || product.category === category);
-  }), [query, category]);
+  }), [storeProducts, query, category]);
 
   const addToCart = (product: Product) => {
     const state = catalogState.find((item) => item.productId === product.id);
@@ -49,7 +50,7 @@ export default function Home() {
     setTimeout(() => setToast(""), 2200);
   };
 
-  const cartProducts = cart.map((id) => products.find((item) => item.id === id)!).filter(Boolean);
+  const cartProducts = cart.map((id) => storeProducts.find((item) => item.id === id)!).filter(Boolean);
   const cartTotal = cartProducts.reduce((sum, item) => sum + item.price, 0);
 
   const scrollToShop = (nextCategory = "All") => {
@@ -108,7 +109,7 @@ export default function Home() {
           <div className="hero-leaf hero-leaf--right" />
           <div className="stone stone--back" />
           <div className="stone stone--front" />
-          <ProductVisual product={products[0]} state={catalogState.find((item) => item.productId === products[0].id)} large />
+          {storeProducts[0] && <ProductVisual product={storeProducts[0]} state={catalogState.find((item) => item.productId === storeProducts[0].id)} large />}
           <div className="hero-note"><b>01</b><span>Launch hero<br />body wash</span></div>
         </div>
       </section>
@@ -140,7 +141,7 @@ export default function Home() {
       </section>
 
       <section className="promise" id="story">
-        <div className="promise-art"><div className="arch"><ProductVisual product={products[3]} state={catalogState.find((item) => item.productId === products[3].id)} large /></div><span className="promise-seal">MADE WITH CARE<br />✦<br />FOR EVERY BODY</span></div>
+        <div className="promise-art"><div className="arch">{(storeProducts[3] ?? storeProducts[0]) && <ProductVisual product={storeProducts[3] ?? storeProducts[0]} state={catalogState.find((item) => item.productId === (storeProducts[3] ?? storeProducts[0]).id)} large />}</div><span className="promise-seal">MADE WITH CARE<br />✦<br />FOR EVERY BODY</span></div>
         <div className="promise-copy"><span className="kicker">THE ALPHA QUEEN PROMISE</span><h2>Simple shopping.<br /><em>Confident beauty.</em></h2><p>One focused cosmetics destination with clear ingredients, sizes, prices and prepaid checkout. Final claims and product details will be added only after each formula is approved.</p><ul><li><span>01</span><div><b>Transparent product pages</b><small>Ingredients, usage and warnings presented clearly.</small></div></li><li><span>02</span><div><b>Secure prepaid orders</b><small>Payment confirmation and order tracking in one place.</small></div></li><li><span>03</span><div><b>Made for Indian customers</b><small>Mobile-first shopping and WhatsApp support planned.</small></div></li></ul><button className="text-button" onClick={() => scrollToShop()}>Explore products →</button></div>
       </section>
 

@@ -13,6 +13,7 @@ export type Product = {
   badge?: string;
   size: string;
   concern: string;
+  active?: boolean;
 };
 
 export const products: Product[] = [

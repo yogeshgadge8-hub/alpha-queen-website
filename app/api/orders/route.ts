@@ -16,7 +16,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const input = validateOrder(await request.json());
+    const input = await validateOrder(await request.json());
     if (input.source !== "website") {
       const denied = await adminOnly();
       if (denied) return denied;

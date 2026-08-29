@@ -1,4 +1,5 @@
 import mysql, { type Pool } from "mysql2/promise";
+import { products as seedProducts } from "@/lib/catalog";
 
 let pool: Pool | null = null;
 let schemaReady: Promise<void> | null = null;
@@ -81,6 +82,25 @@ async function initializeSchema() {
     updated_at DATETIME(3) NOT NULL
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
 
+  await db.query(`CREATE TABLE IF NOT EXISTS store_products (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(180) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    subtitle VARCHAR(255) NOT NULL DEFAULT '',
+    price INT UNSIGNED NOT NULL,
+    old_price INT UNSIGNED NULL,
+    shade VARCHAR(20) NOT NULL DEFAULT '#eaded2',
+    accent VARCHAR(20) NOT NULL DEFAULT '#6f4436',
+    form ENUM('pump','tube','jar') NOT NULL DEFAULT 'pump',
+    badge VARCHAR(100) NOT NULL DEFAULT '',
+    size VARCHAR(80) NOT NULL DEFAULT '',
+    concern VARCHAR(160) NOT NULL DEFAULT '',
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME(3) NOT NULL,
+    updated_at DATETIME(3) NOT NULL,
+    INDEX idx_store_products_active (active, id)
+  ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
   await db.query(`CREATE TABLE IF NOT EXISTS product_media (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id INT UNSIGNED NOT NULL,
@@ -106,8 +126,12 @@ async function initializeSchema() {
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
 
   const now = new Date();
-  for (let productId = 1; productId <= 8; productId += 1) {
-    await db.execute("INSERT IGNORE INTO inventory (product_id, stock, low_stock_threshold, updated_at) VALUES (?, 0, 5, ?)", [productId, now]);
+  for (const product of seedProducts) {
+    await db.execute(`INSERT IGNORE INTO store_products
+      (id, name, category, subtitle, price, old_price, shade, accent, form, badge, size, concern, active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      [product.id, product.name, product.category, product.subtitle, product.price, product.oldPrice ?? null, product.shade, product.accent, product.form, product.badge ?? "", product.size, product.concern, now, now]);
+    await db.execute("INSERT IGNORE INTO inventory (product_id, stock, low_stock_threshold, updated_at) VALUES (?, 0, 5, ?)", [product.id, now]);
   }
 
   await db.execute("DELETE FROM reviews WHERE customer_name = ? AND review_text = ? AND status = 'pending'", ["Test", "This is a deployment verification review."]);

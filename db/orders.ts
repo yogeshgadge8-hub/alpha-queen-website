@@ -1,6 +1,6 @@
 import type { RowDataPacket } from "mysql2/promise";
 import { database, ensureSchema } from "@/db/mysql";
-import { products } from "@/lib/catalog";
+import { listProducts } from "@/db/catalog-state";
 
 export type OrderItem = { id: string; name: string; qty: number; price: number };
 export type OrderInput = {
@@ -35,7 +35,7 @@ type OrderRow = RowDataPacket & {
 
 const clean = (value: unknown) => String(value ?? "").trim();
 
-export function validateOrder(value: unknown): OrderInput {
+export async function validateOrder(value: unknown): Promise<OrderInput> {
   const body = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const source = clean(body.source).toLowerCase();
   if (!("website instagram whatsapp".split(" ")).includes(source)) throw new Error("Select a valid order source");
@@ -49,9 +49,10 @@ export function validateOrder(value: unknown): OrderInput {
   }).filter((item) => item.name) : [];
 
   if (source === "website") {
+    const products = await listProducts(false);
     items = items.map((item) => {
       const product = products.find((candidate) => String(candidate.id) === item.id);
-      if (!product || product.badge === "Coming soon") throw new Error("One or more products are not available for checkout");
+      if (!product) throw new Error("One or more products are not available for checkout");
       return { id: String(product.id), name: product.name, qty: item.qty, price: product.price };
     });
   }

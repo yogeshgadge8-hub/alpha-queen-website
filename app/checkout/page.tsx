@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { catalogItems, products } from "@/lib/catalog";
+import { products, type Product } from "@/lib/catalog";
 
 type Address = { customerName: string; addressLine1: string; addressLine2: string; landmark: string; pincode: string; city: string; state: string };
 const blankAddress: Address = { customerName: "", addressLine1: "", addressLine2: "", landmark: "", pincode: "", city: "", state: "Maharashtra" };
@@ -16,15 +16,16 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState("");
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [stock, setStock] = useState<Record<number, number>>({});
+  const [storeProducts, setStoreProducts] = useState<Product[]>(products);
 
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("items") ?? "";
-    setIds(raw.split(",").map(Number).filter((id) => products.some((product) => product.id === id)));
-    const loadStock = async () => { const response = await fetch("/api/catalog", { cache: "no-store" }); const data = await response.json() as { catalog?: { productId: number; stock: number }[] }; if (response.ok) setStock(Object.fromEntries((data.catalog ?? []).map((item) => [item.productId, item.stock]))); };
+    setIds(raw.split(",").map(Number).filter((id) => Number.isInteger(id) && id > 0));
+    const loadStock = async () => { const response = await fetch("/api/catalog", { cache: "no-store" }); const data = await response.json() as { products?: Product[]; catalog?: { productId: number; stock: number }[] }; if (response.ok) { setStoreProducts(data.products ?? []); setStock(Object.fromEntries((data.catalog ?? []).map((item) => [item.productId, item.stock]))); } };
     void loadStock(); const timer = window.setInterval(() => void loadStock(), 30_000); return () => window.clearInterval(timer);
   }, []);
 
-  const items = useMemo(() => catalogItems(ids), [ids]);
+  const items = useMemo(() => ids.map((id) => storeProducts.find((product) => product.id === id)).filter((product): product is Product => Boolean(product)), [ids, storeProducts]);
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
   const shipping = subtotal >= 699 || subtotal === 0 ? 0 : 75;
   const total = subtotal + shipping;
