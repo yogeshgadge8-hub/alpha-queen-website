@@ -109,4 +109,6 @@ async function initializeSchema() {
   for (let productId = 1; productId <= 8; productId += 1) {
     await db.execute("INSERT IGNORE INTO inventory (product_id, stock, low_stock_threshold, updated_at) VALUES (?, 0, 5, ?)", [productId, now]);
   }
+
+  await db.execute("DELETE FROM reviews WHERE customer_name = ? AND review_text = ? AND status = 'pending'", ["Test", "This is a deployment verification review."]);
 }
