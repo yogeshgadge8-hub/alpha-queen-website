@@ -77,14 +77,20 @@ export async function createReview(value: unknown) {
   await ensureSchema();
   const body = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const productId = validProductId(body.productId);
+  const orderId = String(body.orderId ?? "").trim().toUpperCase();
+  const mobile = String(body.mobile ?? "").replace(/\D/g, "").slice(-10);
   const customerName = String(body.customerName ?? "").trim().slice(0, 100);
   const rating = Math.floor(Number(body.rating));
   const title = String(body.title ?? "").trim().slice(0, 160);
   const text = String(body.text ?? "").trim().slice(0, 2500);
   const mediaUrl = validUrl(body.mediaUrl);
   if (customerName.length < 2) throw new Error("Enter your name");
+  if (!orderId.startsWith("AQ-") || mobile.length !== 10) throw new Error("Enter a valid paid order number and registered mobile number");
   if (rating < 1 || rating > 5) throw new Error("Choose a rating from 1 to 5");
   if (text.length < 10) throw new Error("Review must contain at least 10 characters");
+  const [orderRows] = await database().query<(RowDataPacket & { items_json: string })[]>("SELECT items_json FROM orders WHERE id = ? AND mobile = ? AND payment_status = 'paid' LIMIT 1", [orderId, mobile]);
+  const purchasedItems = orderRows[0] ? JSON.parse(orderRows[0].items_json) as { id: string }[] : [];
+  if (!purchasedItems.some((item) => Number(item.id) === productId)) throw new Error("Paid order verification failed for this product");
   await database().execute("INSERT INTO reviews (product_id, customer_name, rating, title, review_text, media_url, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)", [productId, customerName, rating, title, text, mediaUrl, new Date()]);
 }
 
