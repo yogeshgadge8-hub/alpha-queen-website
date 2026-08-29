@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 
 const catalog = [
-  { name: "Moonmilk Body Wash", price: 499, sampleCost: 165 },
-  { name: "Citrus Dew Face Wash", price: 399, sampleCost: 135 },
-  { name: "Cocoa Cloud Scrub", price: 549, sampleCost: 185 },
-  { name: "Rainwater Body Wash", price: 479, sampleCost: 155 },
-  { name: "Berry Buff Face Polish", price: 429, sampleCost: 145 },
-  { name: "Sandal Silk Scrub", price: 599, sampleCost: 205 },
+  { name: "Royal Oat Body Wash", price: 399, sampleCost: 165 },
+  { name: "Vitamin Glow Face Wash", price: 299, sampleCost: 135 },
+  { name: "Coffee Polish Body Scrub", price: 449, sampleCost: 185 },
+  { name: "Aqua Calm Body Wash", price: 379, sampleCost: 155 },
+  { name: "Berry Bright Face Wash", price: 329, sampleCost: 145 },
+  { name: "Sandal Smooth Scrub", price: 499, sampleCost: 205 },
 ];
 
 type Inputs = {
@@ -105,19 +105,19 @@ export default function ProfitCalculator() {
   return (
     <main className="calculator-page">
       <header className="calculator-header">
-        <a href="/" className="calculator-brand">VELORA<span>seller tools</span></a>
+        <a href="/" className="calculator-brand">ALPHA QUEEN<span>seller tools</span></a>
         <div><span className="calc-private">PRIVATE COSTING TOOL</span><a href="/">← Back to store</a></div>
       </header>
 
       <section className="calculator-intro">
-        <div><span className="kicker">UNIT ECONOMICS</span><h1>Know what you <em>really earn.</em></h1><p>Amazon Revenue Calculatorसारखा स्पष्ट per-order हिशोब—GST, shipping, payment fee आणि प्रत्येक छोटा खर्च वजा केल्यानंतर उरणारा वास्तविक profit.</p></div>
+        <div><span className="kicker">UNIT ECONOMICS</span><h1>Know what you <em>really earn.</em></h1><p>प्रत्येक orderचा स्पष्ट हिशोब—GST, shipping, payment fee आणि प्रत्येक छोटा खर्च वजा केल्यानंतर उरणारा वास्तविक profit.</p></div>
         <div className="formula-card"><small>CORE FORMULA</small><b>Net revenue − total selling costs + eligible ITC</b><p>MRP minus product cost म्हणजे profit नाही. Courier, packaging, gateway, advertising आणि tax सर्व धरले आहेत.</p></div>
       </section>
 
       <section className="calculator-shell">
         <div className="calculator-inputs">
           <div className="calc-panel-head"><div><span>01</span><h2>Product & selling price</h2></div><button onClick={() => { setProductIndex(0); setInputs(initialInputs); }}>Reset sample</button></div>
-          <label className="product-picker"><span>Velora product</span><select value={productIndex} onChange={(event) => selectProduct(Number(event.target.value))}>{catalog.map((product, index) => <option value={index} key={product.name}>{product.name} — ₹{product.price}</option>)}</select><small>Product cost हा sample estimate आहे; supplier invoiceनुसार बदला.</small></label>
+          <label className="product-picker"><span>Alpha Queen product</span><select value={productIndex} onChange={(event) => selectProduct(Number(event.target.value))}>{catalog.map((product, index) => <option value={index} key={product.name}>{product.name} — ₹{product.price}</option>)}</select><small>Product cost हा sample estimate आहे; supplier invoiceनुसार बदला.</small></label>
           <div className="calc-grid calc-grid--three">
             <NumberField label="MRP / selling price" value={inputs.sellingPrice} onChange={(value) => update("sellingPrice", value)} hint="GST inclusive" />
             <NumberField label="Discount" value={inputs.discount} onChange={(value) => update("discount", value)} hint="Coupon/offer per order" />
@@ -171,7 +171,7 @@ export default function ProfitCalculator() {
       </section>
 
       <section className="calc-notes"><div><b>GST calculation</b><p>Inclusive GST = Customer collection × GST rate ÷ (100 + GST rate). 18% is prefilled for planning, not a final tax classification.</p></div><div><b>Input Tax Credit</b><p>Only enter credit that your accountant confirms is eligible and supported by valid tax invoices. Otherwise keep it ₹0.</p></div><div><b>Shipping clarity</b><p>“Shipping charged” is what the customer pays. “Courier cost” is what you pay—these are deliberately separate.</p></div></section>
-      <footer className="calculator-footer"><span>Velora Seller Tools · Estimate only</span><span>Confirm HSN, GST and eligible ITC with a tax professional before filing.</span></footer>
+      <footer className="calculator-footer"><span>Alpha Queen Seller Tools · Estimate only</span><span>Confirm HSN, GST and eligible ITC with a tax professional before filing.</span></footer>
     </main>
   );
 }
