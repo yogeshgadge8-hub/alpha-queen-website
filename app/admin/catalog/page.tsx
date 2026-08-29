@@ -19,7 +19,7 @@ function ProductFields({ value, onChange }: { value: Omit<Product, "rating" | "r
     <label><span>Old price ₹</span><input type="number" min="0" value={value.oldPrice ?? ""} onChange={(e) => onChange({ oldPrice: e.target.value ? Number(e.target.value) : undefined })} /></label>
     <label><span>Size</span><input value={value.size} onChange={(e) => onChange({ size: e.target.value })} placeholder="100 ml" /></label>
     <label><span>Skin concern</span><input value={value.concern} onChange={(e) => onChange({ concern: e.target.value })} /></label>
-    <label><span>Pack type</span><select value={value.form} onChange={(e) => onChange({ form: e.target.value as Product["form"] })}><option value="pump">Pump</option><option value="tube">Tube</option><option value="jar">Jar</option></select></label>
+    <label><span>Pack type</span><select value={value.form} onChange={(e) => onChange({ form: e.target.value as Product["form"] })}><option value="pump">Pump bottle</option><option value="tube">Tube</option><option value="jar">Jar</option><option value="soap">Soap bar</option></select></label>
     <label><span>Badge</span><input value={value.badge ?? ""} onChange={(e) => onChange({ badge: e.target.value })} placeholder="New / Bestseller" /></label>
     <label><span>Card colour</span><input type="color" value={value.shade} onChange={(e) => onChange({ shade: e.target.value })} /></label>
     <label><span>Accent colour</span><input type="color" value={value.accent} onChange={(e) => onChange({ accent: e.target.value })} /></label>

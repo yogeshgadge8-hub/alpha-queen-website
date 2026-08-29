@@ -47,7 +47,7 @@ export async function adminCatalogState() { await ensureSchema(); const [product
 function productValues(body: Record<string, unknown>) {
   const name = clean(body.name, 180); const category = clean(body.category, 100); const price = money(body.price);
   if (name.length < 2 || category.length < 2) throw new Error("Product name and category are required");
-  const form = ["pump", "tube", "jar"].includes(clean(body.form)) ? clean(body.form) as Product["form"] : "pump";
+  const form = ["pump", "tube", "jar", "soap"].includes(clean(body.form)) ? clean(body.form) as Product["form"] : "pump";
   return { name, category, subtitle: clean(body.subtitle), price, oldPrice: money(body.oldPrice, true), shade: color(body.shade, "#eaded2"), accent: color(body.accent, "#6f4436"), form, badge: clean(body.badge, 100), size: clean(body.size, 80), concern: clean(body.concern, 160), active: body.active !== false };
 }
 

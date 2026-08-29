@@ -9,7 +9,7 @@ export type Product = {
   reviews: number;
   shade: string;
   accent: string;
-  form: "pump" | "tube" | "jar";
+  form: "pump" | "tube" | "jar" | "soap";
   badge?: string;
   size: string;
   concern: string;

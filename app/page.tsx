@@ -40,6 +40,7 @@ export default function Home() {
     const matchesQuery = `${product.name} ${product.category} ${product.subtitle} ${product.concern}`.toLowerCase().includes(query.toLowerCase());
     return matchesQuery && (category === "All" || product.category === category);
   }), [storeProducts, query, category]);
+  const storeCategories = useMemo(() => ["All", ...Array.from(new Set(storeProducts.map((product) => product.category).filter(Boolean)))], [storeProducts]);
 
   const addToCart = (product: Product) => {
     const state = catalogState.find((item) => item.productId === product.id);
@@ -122,7 +123,7 @@ export default function Home() {
       </section>
 
       <section className="shop-section" id="shop">
-        <div className="section-heading"><div><span className="kicker">ALPHA QUEEN STORE</span><h2>Today&apos;s beauty picks.</h2></div><div className="filters">{["All", "Body Wash", "Face Wash", "Body Scrub", "Moisturizer", "Serum"].map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
+        <div className="section-heading"><div><span className="kicker">ALPHA QUEEN STORE</span><h2>Today&apos;s beauty picks.</h2></div><div className="filters">{storeCategories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
         {query && <p className="result-note">Showing {filtered.length} result{filtered.length !== 1 ? "s" : ""} for “{query}”</p>}
         <div className="product-grid">
           {filtered.map((product) => (
