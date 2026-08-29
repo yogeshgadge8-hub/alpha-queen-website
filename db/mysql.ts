@@ -108,11 +108,22 @@ async function initializeSchema() {
     product_id INT UNSIGNED NOT NULL,
     media_type ENUM('image','video') NOT NULL,
     media_url VARCHAR(1200) NOT NULL,
+    media_blob MEDIUMBLOB NULL,
+    media_mime VARCHAR(100) NOT NULL DEFAULT '',
+    file_name VARCHAR(255) NOT NULL DEFAULT '',
     alt_text VARCHAR(255) NOT NULL DEFAULT '',
     sort_order INT UNSIGNED NOT NULL DEFAULT 0,
     created_at DATETIME(3) NOT NULL,
     INDEX idx_product_media_product (product_id, sort_order)
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+  for (const statement of [
+    "ALTER TABLE product_media ADD COLUMN media_blob MEDIUMBLOB NULL AFTER media_url",
+    "ALTER TABLE product_media ADD COLUMN media_mime VARCHAR(100) NOT NULL DEFAULT '' AFTER media_blob",
+    "ALTER TABLE product_media ADD COLUMN file_name VARCHAR(255) NOT NULL DEFAULT '' AFTER media_mime",
+  ]) {
+    try { await db.query(statement); } catch (error) { if ((error as { code?: string }).code !== "ER_DUP_FIELDNAME") throw error; }
+  }
 
   await db.query(`CREATE TABLE IF NOT EXISTS reviews (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -122,10 +133,21 @@ async function initializeSchema() {
     title VARCHAR(160) NOT NULL DEFAULT '',
     review_text TEXT NOT NULL,
     media_url VARCHAR(1200) NOT NULL DEFAULT '',
+    media_blob MEDIUMBLOB NULL,
+    media_mime VARCHAR(100) NOT NULL DEFAULT '',
+    file_name VARCHAR(255) NOT NULL DEFAULT '',
     status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     created_at DATETIME(3) NOT NULL,
     INDEX idx_reviews_product_status (product_id, status, created_at)
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+
+  for (const statement of [
+    "ALTER TABLE reviews ADD COLUMN media_blob MEDIUMBLOB NULL AFTER media_url",
+    "ALTER TABLE reviews ADD COLUMN media_mime VARCHAR(100) NOT NULL DEFAULT '' AFTER media_blob",
+    "ALTER TABLE reviews ADD COLUMN file_name VARCHAR(255) NOT NULL DEFAULT '' AFTER media_mime",
+  ]) {
+    try { await db.query(statement); } catch (error) { if ((error as { code?: string }).code !== "ER_DUP_FIELDNAME") throw error; }
+  }
 
   const now = new Date();
   for (const product of seedProducts) {

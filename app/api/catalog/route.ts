@@ -1,4 +1,4 @@
-import { addMedia, adminCatalogState, createProduct, deleteMedia, publicCatalogSnapshot, updateInventory, updateProduct } from "@/db/catalog-state";
+import { addMedia, addMediaFile, adminCatalogState, createProduct, deleteMedia, publicCatalogSnapshot, updateInventory, updateProduct } from "@/db/catalog-state";
 import { currentAdmin } from "@/db/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +23,12 @@ export async function PATCH(request: Request) {
 export async function POST(request: Request) {
   if (!(await currentAdmin())) return Response.json({ error: "Admin login required" }, { status: 401 });
   try {
+    if (request.headers.get("content-type")?.includes("multipart/form-data")) {
+      const form = await request.formData(); const file = form.get("file");
+      if (!(file instanceof File)) throw new Error("Choose an image or video file");
+      await addMediaFile(form.get("productId"), { bytes: new Uint8Array(await file.arrayBuffer()), mime: file.type, name: file.name }, form.get("alt"));
+      return Response.json({ ok: true }, { status: 201 });
+    }
     const body = await request.json() as Record<string, unknown>;
     if (body.action === "product") await createProduct(body.product);
     else await addMedia(body.productId, body.type, body.url, body.alt);

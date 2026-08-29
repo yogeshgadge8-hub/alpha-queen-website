@@ -2,7 +2,13 @@ import { createReview, moderateReview } from "@/db/catalog-state";
 import { currentAdmin } from "@/db/admin-auth";
 
 export async function POST(request: Request) {
-  try { await createReview(await request.json()); return Response.json({ ok: true, message: "Review submitted for approval" }, { status: 201 }); }
+  try {
+    if (request.headers.get("content-type")?.includes("multipart/form-data")) {
+      const form = await request.formData(); const file = form.get("file"); const value = Object.fromEntries(form.entries());
+      await createReview(value, file instanceof File && file.size ? { bytes: new Uint8Array(await file.arrayBuffer()), mime: file.type, name: file.name } : undefined);
+    } else await createReview(await request.json());
+    return Response.json({ ok: true, message: "Review submitted for approval" }, { status: 201 });
+  }
   catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Unable to submit review" }, { status: 400 }); }
 }
 
