@@ -40,7 +40,7 @@ export default function Home() {
     const matchesQuery = `${product.name} ${product.category} ${product.subtitle} ${product.concern}`.toLowerCase().includes(query.toLowerCase());
     return matchesQuery && (category === "All" || product.category === category);
   }), [storeProducts, query, category]);
-  const storeCategories = useMemo(() => ["All", ...Array.from(new Set(storeProducts.map((product) => product.category).filter(Boolean)))], [storeProducts]);
+  const storeCategories = useMemo(() => ["All", ...Array.from(new Set([...categories.map((item) => item.name), ...storeProducts.map((product) => product.category).filter(Boolean)]))], [storeProducts]);
 
   const addToCart = (product: Product) => {
     const state = catalogState.find((item) => item.productId === product.id);
@@ -118,7 +118,7 @@ export default function Home() {
       <section className="category-section">
         <div className="section-heading"><div><span className="kicker">SHOP BY CATEGORY</span><h2>Everything for your beauty routine.</h2></div><button onClick={() => scrollToShop()}>View all products →</button></div>
         <div className="category-grid">
-          {categories.map((item) => <button key={item.name} className="category-card" style={{ "--card": item.color } as React.CSSProperties} onClick={() => scrollToShop(item.name === "Gift Sets" ? "All" : item.name)}><span className="category-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.note}</small></div><i>›</i></button>)}
+          {categories.map((item) => <button key={item.name} className="category-card" style={{ "--card": item.color } as React.CSSProperties} onClick={() => scrollToShop(item.name)}><span className="category-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.note}</small></div><i>›</i></button>)}
         </div>
       </section>
 

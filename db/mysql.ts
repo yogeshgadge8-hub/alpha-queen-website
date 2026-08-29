@@ -91,7 +91,7 @@ async function initializeSchema() {
     old_price INT UNSIGNED NULL,
     shade VARCHAR(20) NOT NULL DEFAULT '#eaded2',
     accent VARCHAR(20) NOT NULL DEFAULT '#6f4436',
-    form ENUM('pump','tube','jar','soap') NOT NULL DEFAULT 'pump',
+    form ENUM('pump','tube','jar','soap','combo') NOT NULL DEFAULT 'pump',
     badge VARCHAR(100) NOT NULL DEFAULT '',
     size VARCHAR(80) NOT NULL DEFAULT '',
     concern VARCHAR(160) NOT NULL DEFAULT '',
@@ -101,7 +101,7 @@ async function initializeSchema() {
     INDEX idx_store_products_active (active, id)
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
 
-  await db.query("ALTER TABLE store_products MODIFY COLUMN form ENUM('pump','tube','jar','soap') NOT NULL DEFAULT 'pump'");
+  await db.query("ALTER TABLE store_products MODIFY COLUMN form ENUM('pump','tube','jar','soap','combo') NOT NULL DEFAULT 'pump'");
 
   await db.query(`CREATE TABLE IF NOT EXISTS product_media (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

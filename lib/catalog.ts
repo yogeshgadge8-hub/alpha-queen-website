@@ -9,7 +9,7 @@ export type Product = {
   reviews: number;
   shade: string;
   accent: string;
-  form: "pump" | "tube" | "jar" | "soap";
+  form: "pump" | "tube" | "jar" | "soap" | "combo";
   badge?: string;
   size: string;
   concern: string;
@@ -31,10 +31,16 @@ export const categories = [
   { name: "Body Wash", icon: "✦", note: "Daily freshness", color: "#f1dfd2" },
   { name: "Face Wash", icon: "◌", note: "Clean & calm", color: "#dfe8d0" },
   { name: "Body Scrub", icon: "✺", note: "Smooth & renew", color: "#dfc2a8" },
+  { name: "Herbal Soap", icon: "▰", note: "Herbal cleansing bars", color: "#d8dfc2" },
+  { name: "Ayurvedic Hair Care", icon: "⌁", note: "Oils, masks & care", color: "#d8e1d0" },
+  { name: "Herbal Skin Care", icon: "❋", note: "Traditional skin rituals", color: "#eadbbf" },
   { name: "Moisturizer", icon: "☁", note: "Seal in hydration", color: "#dce3ed" },
   { name: "Serum", icon: "◇", note: "Targeted care", color: "#ead8dc" },
-  { name: "Gift Sets", icon: "♕", note: "Made to delight", color: "#e8dce8" },
+  { name: "Combo Offers", icon: "＋", note: "Value bundles", color: "#e8dce8" },
+  { name: "Gift Sets", icon: "♕", note: "Made to delight", color: "#e2d8e4" },
 ];
+
+export const productCategoryNames = categories.map((category) => category.name);
 
 export function catalogItems(ids: number[]) {
   return ids.map((id) => products.find((product) => product.id === id)).filter((product): product is Product => Boolean(product));

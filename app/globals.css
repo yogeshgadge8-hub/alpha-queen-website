@@ -470,6 +470,13 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .catalog-admin-card h2 { margin:5px 0; font:600 23px var(--font-cormorant); }
 .catalog-admin-card>div:first-child>span { font-size:8px; color:#6d655d; }
 .new-product-card { max-width:980px; margin-bottom:55px; }
+.new-product-title { margin-top:38px; }
+.product-template-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; max-width:980px; }
+.product-template-grid button { min-height:92px; padding:17px; border:1px solid #cfc7bc; background:#fbf9f5; text-align:left; cursor:pointer; }
+.product-template-grid button:hover { border-color:#a34f34; box-shadow:0 8px 22px rgba(63,43,31,.09); }
+.product-template-grid b,.product-template-grid span { display:block; }
+.product-template-grid b { font-size:12px; }
+.product-template-grid span { margin-top:7px; color:#756d64; font-size:9px; }
 .product-list-title { margin-top:48px; }
 .product-editor-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:20px; padding:16px; background:#f2eee8; }
 .product-editor-grid label { display:grid; gap:5px; min-width:0; }
@@ -497,8 +504,8 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .review-admin-list small,.review-admin-list>a { display:block; margin-top:8px; font-size:7px; color:#857d73; }
 .review-admin-list footer { display:flex; gap:8px; margin-top:15px; }
 .review-admin-list footer button { height:34px; padding:0 12px; border:1px solid #81796f; background:#fff; font-size:7px; text-transform:uppercase; }
-@media(max-width:900px) { .catalog-admin-grid { grid-template-columns:1fr; }.review-admin-list { grid-template-columns:1fr 1fr; } }
-@media(max-width:600px) { .stock-editor,.media-editor,.review-admin-list,.product-editor-grid { grid-template-columns:1fr; }.product-editor-grid label.wide { grid-column:auto; } }
+@media(max-width:900px) { .catalog-admin-grid { grid-template-columns:1fr; }.review-admin-list { grid-template-columns:1fr 1fr; }.product-template-grid { grid-template-columns:1fr 1fr; } }
+@media(max-width:600px) { .stock-editor,.media-editor,.review-admin-list,.product-editor-grid,.product-template-grid { grid-template-columns:1fr; }.product-editor-grid label.wide { grid-column:auto; } }
 
 /* Seller profit calculator */
 .calculator-page { min-height:100vh; background:#eeeae2; color:#29251f; }
