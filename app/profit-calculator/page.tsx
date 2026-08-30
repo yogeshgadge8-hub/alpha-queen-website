@@ -1,14 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const catalog = [
-  { name: "Royal Oat Body Wash", price: 399, sampleCost: 165 },
-  { name: "Vitamin Glow Face Wash", price: 299, sampleCost: 135 },
-  { name: "Coffee Polish Body Scrub", price: 449, sampleCost: 185 },
-  { name: "Aqua Calm Body Wash", price: 379, sampleCost: 155 },
-  { name: "Berry Bright Face Wash", price: 329, sampleCost: 145 },
-  { name: "Sandal Smooth Scrub", price: 499, sampleCost: 205 },
+type CalculatorProduct = { id: string; name: string; price: number; sampleCost: number; active?: boolean };
+
+const sampleCosts: Record<string, number> = {
+  "Royal Oat Body Wash": 165,
+  "Vitamin Glow Face Wash": 135,
+  "Coffee Polish Body Scrub": 185,
+  "Aqua Calm Body Wash": 155,
+  "Berry Bright Face Wash": 145,
+  "Sandal Smooth Scrub": 205,
+};
+
+const fallbackCatalog: CalculatorProduct[] = [
+  { id: "sample-1", name: "Royal Oat Body Wash", price: 399, sampleCost: 165 },
+  { id: "sample-2", name: "Vitamin Glow Face Wash", price: 299, sampleCost: 135 },
+  { id: "sample-3", name: "Coffee Polish Body Scrub", price: 449, sampleCost: 185 },
+  { id: "sample-4", name: "Aqua Calm Body Wash", price: 379, sampleCost: 155 },
+  { id: "sample-5", name: "Berry Bright Face Wash", price: 329, sampleCost: 145 },
+  { id: "sample-6", name: "Sandal Smooth Scrub", price: 499, sampleCost: 205 },
 ];
 
 type Inputs = {
@@ -66,15 +77,57 @@ function NumberField({ label, value, onChange, suffix = "₹", hint }: { label: 
 }
 
 export default function ProfitCalculator() {
-  const [productIndex, setProductIndex] = useState(0);
+  const [catalog, setCatalog] = useState<CalculatorProduct[]>(fallbackCatalog);
+  const [productId, setProductId] = useState(fallbackCatalog[0].id);
+  const [manualProductName, setManualProductName] = useState("");
+  const [catalogMessage, setCatalogMessage] = useState("Loading products from admin catalog…");
   const [inputs, setInputs] = useState<Inputs>(initialInputs);
 
   const update = (key: keyof Inputs, value: number) => setInputs((current) => ({ ...current, [key]: value }));
 
-  const selectProduct = (index: number) => {
-    const product = catalog[index];
-    setProductIndex(index);
+  useEffect(() => {
+    const loadCatalog = async () => {
+      try {
+        let response = await fetch("/api/catalog?admin=1", { cache: "no-store" });
+        let includesInactive = true;
+        if (response.status === 401) {
+          response = await fetch("/api/catalog", { cache: "no-store" });
+          includesInactive = false;
+        }
+        const data = await response.json() as { products?: Array<{ id: number; name: string; price: number; active?: boolean }>; error?: string };
+        if (!response.ok) throw new Error(data.error ?? "Unable to load products");
+        const products = (data.products ?? []).map((product) => ({
+          id: String(product.id),
+          name: product.name,
+          price: Number(product.price),
+          sampleCost: sampleCosts[product.name] ?? 0,
+          active: product.active,
+        }));
+        if (!products.length) throw new Error("No catalog products found");
+        setCatalog(products);
+        setProductId(products[0].id);
+        setInputs((current) => ({ ...current, sellingPrice: products[0].price, productCost: products[0].sampleCost }));
+        setCatalogMessage(includesInactive ? `${products.length} admin products loaded, including inactive drafts.` : `${products.length} live products loaded. Sign in as admin to include inactive drafts.`);
+      } catch (error) {
+        setCatalogMessage(`${error instanceof Error ? error.message : "Unable to load products"}. Sample products are shown; Manual product is still available.`);
+      }
+    };
+    void loadCatalog();
+  }, []);
+
+  const selectProduct = (id: string) => {
+    setProductId(id);
+    if (id === "manual") return;
+    const product = catalog.find((item) => item.id === id);
+    if (!product) return;
     setInputs((current) => ({ ...current, sellingPrice: product.price, productCost: product.sampleCost }));
+  };
+
+  const reset = () => {
+    const first = catalog[0];
+    setProductId(first?.id ?? "manual");
+    setManualProductName("");
+    setInputs({ ...initialInputs, sellingPrice: first?.price ?? initialInputs.sellingPrice, productCost: first?.sampleCost ?? 0 });
   };
 
   const result = useMemo(() => {
@@ -116,8 +169,8 @@ export default function ProfitCalculator() {
 
       <section className="calculator-shell">
         <div className="calculator-inputs">
-          <div className="calc-panel-head"><div><span>01</span><h2>Product & selling price</h2></div><button onClick={() => { setProductIndex(0); setInputs(initialInputs); }}>Reset sample</button></div>
-          <label className="product-picker"><span>Alpha Queen product</span><select value={productIndex} onChange={(event) => selectProduct(Number(event.target.value))}>{catalog.map((product, index) => <option value={index} key={product.name}>{product.name} — ₹{product.price}</option>)}</select><small>Product cost हा sample estimate आहे; supplier invoiceनुसार बदला.</small></label>
+          <div className="calc-panel-head"><div><span>01</span><h2>Product & selling price</h2></div><button onClick={reset}>Reset sample</button></div>
+          <label className="product-picker"><span>Alpha Queen product</span><select value={productId} onChange={(event) => selectProduct(event.target.value)}>{catalog.map((product) => <option value={product.id} key={product.id}>{product.name} — ₹{product.price}{product.active === false ? " (inactive draft)" : ""}</option>)}<option value="manual">＋ Manual product / custom calculation</option></select>{productId === "manual" && <input className="manual-product-name" value={manualProductName} onChange={(event) => setManualProductName(event.target.value)} placeholder="Enter product name, variant or combo" />}<small>{catalogMessage} Purchase cost invoiceनुसार खाली manually भरा.</small></label>
           <div className="calc-grid calc-grid--three">
             <NumberField label="MRP / selling price" value={inputs.sellingPrice} onChange={(value) => update("sellingPrice", value)} hint="GST inclusive" />
             <NumberField label="Discount" value={inputs.discount} onChange={(value) => update("discount", value)} hint="Coupon/offer per order" />
