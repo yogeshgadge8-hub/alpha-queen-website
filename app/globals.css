@@ -404,6 +404,8 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .daily-order-summary b { font-size:18px; }
 .order-actions { display:flex; align-items:end; gap:8px; }
 .order-actions>button { height:34px; padding:0 10px; border:0; background:#687657; color:#fff; font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; cursor:pointer; }
+.order-actions>.delete-order-button { border:1px solid #a84232; background:#fff; color:#a84232; }
+.order-actions>button:disabled { cursor:wait; opacity:.55; }
 .print-order-sheet { display:none; }
 
 @media(max-width:950px) {
