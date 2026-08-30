@@ -75,21 +75,25 @@ export default function Home() {
   };
 
   return (
-    <main>
-      <div className="announcement"><span>PREPAID ORDERS ONLY</span><span>•</span><span>LAUNCH OFFER: QUEEN15</span><span>•</span><span>FREE SHIPPING ABOVE ₹699</span></div>
+    <main className="storefront">
+      <div className="announcement"><span>✦ PREPAID ORDERS ONLY</span><span>✦ LAUNCH OFFER: QUEEN15</span><span>✦ FREE SHIPPING ABOVE ₹699</span><span>✦ SECURE CHECKOUT</span></div>
       <header className="header">
         <button className="menu-button" aria-label="Open menu" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
         <button className="logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Alpha Queen home">ALPHA QUEEN<span>cosmetics</span></button>
+        <div className="store-location"><span>⌖</span><div><small>DELIVERING ACROSS</small><b>India</b></div></div>
         <div className="search-wrap">
           <span>⌕</span>
           <input aria-label="Search products" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Alpha Queen products, ingredients or skin concern…" />
           {query && <button aria-label="Clear search" onClick={() => setQuery("")}>×</button>}
         </div>
         <nav className={menuOpen ? "nav nav--open" : "nav"}>
-          <button onClick={() => scrollToShop("All")}>Shop all</button>
+          <button onClick={() => scrollToShop("All")}>All products ›</button>
+          <a href="#launch" onClick={() => setMenuOpen(false)}>Offers ›</a>
           <button onClick={() => scrollToShop("Body Wash")}>Bath & body</button>
           <button onClick={() => scrollToShop("Face Wash")}>Skin care</button>
-          <a href="#story" onClick={() => setMenuOpen(false)}>Our story</a>
+          <button onClick={() => scrollToShop("Herbal Soap")}>Herbal care</button>
+          <button onClick={() => scrollToShop("Combo Offers")}>Combo offers</button>
+          <a href="#story" onClick={() => setMenuOpen(false)}>About us</a>
         </nav>
         <div className="header-actions">
           <button aria-label="Mobile account" onClick={() => { window.location.href = "/checkout"; }}><span>♙</span><small>Mobile login</small></button>
@@ -97,6 +101,8 @@ export default function Home() {
           <button aria-label={`Shopping bag with ${cart.length} items`} onClick={() => setCartOpen(true)}><span>□</span><small>Bag</small>{cart.length > 0 && <i>{cart.length}</i>}</button>
         </div>
       </header>
+
+      <section className="store-benefit-banner" id="launch"><div><span>✦</span><p><b>Alpha Queen Launch Privileges</b><small>Discover bath, body, skin care and herbal essentials in one place.</small></p></div><button onClick={() => scrollToShop()}>Explore now</button></section>
 
       <section className="hero">
         <div className="hero-copy">
@@ -116,19 +122,19 @@ export default function Home() {
           <div className="stone stone--back" />
           <div className="stone stone--front" />
           {storeProducts[0] && <ProductVisual product={storeProducts[0]} state={catalogState.find((item) => item.productId === storeProducts[0].id)} large />}
-          <div className="hero-note"><b>01</b><span>Launch hero<br />body wash</span></div>
+          <div className="hero-note"><b>01</b><span>Beauty rituals<br />made simple</span></div>
         </div>
       </section>
 
       <section className="category-section">
-        <div className="section-heading"><div><span className="kicker">SHOP BY CATEGORY</span><h2>Everything for your beauty routine.</h2></div><button onClick={() => scrollToShop()}>View all products →</button></div>
+        <div className="section-heading"><div><span className="kicker">SHOP BY CATEGORY</span><h2>Categories</h2></div><button onClick={() => scrollToShop()}>View all products →</button></div>
         <div className="category-grid">
           {categories.map((item) => <button key={item.name} className="category-card" style={{ "--card": item.color } as React.CSSProperties} onClick={() => scrollToShop(item.name)}><span className="category-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.note}</small></div><i>›</i></button>)}
         </div>
       </section>
 
       <section className="shop-section" id="shop">
-        <div className="section-heading"><div><span className="kicker">ALPHA QUEEN STORE</span><h2>Today&apos;s beauty picks.</h2></div><div className="filters">{storeCategories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
+        <div className="section-heading"><div><span className="kicker">ALPHA QUEEN STORE</span><h2>Best Selling Products</h2></div><div className="filters">{storeCategories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
         {query && <p className="result-note">Showing {filtered.length} result{filtered.length !== 1 ? "s" : ""} for “{query}”</p>}
         <div className="product-grid">
           {filtered.map((product) => (
