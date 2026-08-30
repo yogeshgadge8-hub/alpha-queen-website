@@ -771,10 +771,18 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .storefront .promise-copy { background:#fff; }
 .storefront .promise-copy h2 { color:#d65316; }
 .storefront .reviews { background:#fff0e6; }
-.storefront .newsletter { background:#ed6b21; }
-.storefront footer { background:#d65a1b; color:#fff; }
-.storefront footer>div:first-child>p,.storefront footer a,.storefront footer p { color:#fff4ed; }
-.storefront .legal { background:#bd430e; color:#fff4ed; }
+.storefront .newsletter { border-top:1px solid #eee3da; border-bottom:1px solid #eee3da; background:#fff; color:#2d2823; }
+.storefront .newsletter form { border-color:#cfc3b8; }
+.storefront .newsletter input { color:#2d2823; }
+.storefront .newsletter input::placeholder { color:#8a7f76; }
+.storefront .newsletter button { color:#ed6b21; }
+.storefront footer { background:#fff; color:#26221e; }
+.storefront footer>div:first-child>p,.storefront footer a,.storefront footer p { color:#655d56; }
+.storefront .footer-connect-title { display:block; margin:0 0 12px; color:#26221e; }
+.storefront .socials { flex-wrap:wrap; }
+.storefront .socials button { width:auto; height:34px; padding:0 12px; border-color:#d8ccc2; border-radius:18px; color:#3c342e; font-weight:700; cursor:pointer; }
+.storefront .socials button:hover { border-color:#ed6b21; color:#d65316; }
+.storefront .legal { border-top:1px solid #eee3da; background:#fff; color:#746b63; }
 
 @media(max-width:1180px) {
   .storefront .header { grid-template-columns:auto minmax(280px,1fr) auto; }

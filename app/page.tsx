@@ -65,6 +65,11 @@ export default function Home() {
     setMenuOpen(false);
   };
 
+  const showSocialLinkPending = (channel: string) => {
+    setToast(`${channel} official link will be connected here`);
+    setTimeout(() => setToast(""), 2500);
+  };
+
   const submitReview = async (event: FormEvent) => {
     event.preventDefault(); if (!selected) return;
     const form = new FormData(); form.set("productId", String(selected.id)); Object.entries(review).forEach(([key, value]) => form.set(key, value)); if (reviewFile) form.set("file", reviewFile);
@@ -157,7 +162,7 @@ export default function Home() {
 
       <section className="newsletter"><span>ALPHA QUEEN LAUNCH LIST</span><h2>Be first to know.</h2><p>New products, launch dates and prepaid offers in your inbox.</p><form onSubmit={(e) => { e.preventDefault(); setToast("You are on the Alpha Queen launch list"); }}><input type="email" required aria-label="Email address" placeholder="Your email address" /><button>Notify me →</button></form></section>
 
-      <footer><div><button className="logo logo--footer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Alpha Queen home"><img src="/images/alpha-queen-logo-original.png" alt="Alpha Queen" /></button><p>Your focused online destination for everyday cosmetics.</p><div className="socials"><button>ig</button><button>yt</button><button>f</button></div></div><div><b>SHOP</b><a href="#shop">Body wash</a><a href="#shop">Body scrub</a><a href="#shop">Face care</a><a href="#shop">Gift sets</a></div><div><b>HELP</b><a href="mailto:care@alphaqueenofficial.com">Contact us</a><a href="/policies#shipping">Shipping policy</a><a href="/policies#returns">Return policy</a><a href="/policies#cancellation">Cancellation policy</a></div><div><b>ABOUT</b><a href="#story">Our story</a><a href="#story">Ingredients</a><a href="#story">Why Alpha Queen</a><a href="/admin/orders">Order desk</a></div><div className="footer-contact"><b>NEED HELP?</b><p>Mon–Sat, 10am–6pm IST</p><a href="mailto:care@alphaqueenofficial.com">care@alphaqueenofficial.com</a></div></footer>
+      <footer><div><button className="logo logo--footer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Alpha Queen home"><img src="/images/alpha-queen-logo-header.png" alt="Alpha Queen" /></button><p>Your focused online destination for everyday cosmetics.</p><b className="footer-connect-title">CONNECT WITH ALPHA QUEEN</b><div className="socials"><button type="button" onClick={() => showSocialLinkPending("Instagram")}>Instagram</button><button type="button" onClick={() => showSocialLinkPending("Facebook")}>Facebook</button><button type="button" onClick={() => showSocialLinkPending("YouTube")}>YouTube</button><button type="button" onClick={() => showSocialLinkPending("WhatsApp")}>WhatsApp Join</button></div></div><div><b>SHOP</b><a href="#shop">Body wash</a><a href="#shop">Body scrub</a><a href="#shop">Face care</a><a href="#shop">Gift sets</a></div><div><b>HELP</b><a href="mailto:care@alphaqueenofficial.com">Contact us</a><a href="/policies#shipping">Shipping policy</a><a href="/policies#returns">Return policy</a><a href="/policies#cancellation">Cancellation policy</a></div><div><b>ABOUT</b><a href="#story">Our story</a><a href="#story">Ingredients</a><a href="#story">Why Alpha Queen</a><a href="/admin/orders">Order desk</a></div><div className="footer-contact"><b>NEED HELP?</b><p>Mon–Sat, 10am–6pm IST</p><a href="mailto:care@alphaqueenofficial.com">care@alphaqueenofficial.com</a></div></footer>
       <div className="legal"><span>© 2026 Alpha Queen. Preview storefront.</span><span><a href="/policies">Terms · Shipping · Returns</a></span><span>alphaqueenofficial.com</span></div>
 
       {toast && <div className="toast">✓ {toast}</div>}
