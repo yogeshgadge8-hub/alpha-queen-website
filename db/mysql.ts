@@ -88,6 +88,7 @@ async function initializeSchema() {
     category VARCHAR(100) NOT NULL,
     subtitle VARCHAR(255) NOT NULL DEFAULT '',
     price INT UNSIGNED NOT NULL,
+    purchase_cost DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
     old_price INT UNSIGNED NULL,
     shade VARCHAR(20) NOT NULL DEFAULT '#eaded2',
     accent VARCHAR(20) NOT NULL DEFAULT '#6f4436',
@@ -102,6 +103,25 @@ async function initializeSchema() {
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
 
   await db.query("ALTER TABLE store_products MODIFY COLUMN form ENUM('pump','tube','jar','soap','combo') NOT NULL DEFAULT 'pump'");
+
+  try { await db.query("ALTER TABLE store_products ADD COLUMN purchase_cost DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0 AFTER price"); }
+  catch (error) { if ((error as { code?: string }).code !== "ER_DUP_FIELDNAME") throw error; }
+
+  await db.query(`CREATE TABLE IF NOT EXISTS analytics_settings (
+    id TINYINT UNSIGNED PRIMARY KEY,
+    gst_rate DECIMAL(5,2) UNSIGNED NOT NULL DEFAULT 18,
+    packaging_per_order DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
+    courier_per_order DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
+    gateway_rate DECIMAL(5,2) UNSIGNED NOT NULL DEFAULT 0,
+    gateway_gst_rate DECIMAL(5,2) UNSIGNED NOT NULL DEFAULT 18,
+    ads_per_order DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
+    software_per_order DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
+    other_per_order DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
+    updated_at DATETIME(3) NOT NULL
+  ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  await db.execute(`INSERT IGNORE INTO analytics_settings
+    (id, gst_rate, packaging_per_order, courier_per_order, gateway_rate, gateway_gst_rate, ads_per_order, software_per_order, other_per_order, updated_at)
+    VALUES (1, 18, 0, 0, 0, 18, 0, 0, 0, ?)`, [new Date()]);
 
   await db.query(`CREATE TABLE IF NOT EXISTS product_media (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

@@ -150,6 +150,11 @@ blockquote footer { display:flex; align-items:center; gap:11px; }
 blockquote footer>span { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:#e4ddd1; font-size:9px; }
 blockquote footer b { font-size:9px; letter-spacing:.5px; }
 blockquote footer small { display:block; margin-top:3px; color:#91887d; font-weight:400; }
+.review-grid blockquote>img,.review-grid blockquote>video { width:100%; max-height:210px; margin-top:18px; object-fit:cover; background:#eee; }
+.reviews-empty { max-width:720px; margin:38px auto 0; padding:34px; border:1px solid var(--line); background:#fff; }
+.reviews-empty b { font:600 24px var(--font-cormorant); }
+.reviews-empty p { margin:10px 0 18px; color:#756d64; font-size:9px; line-height:1.65; }
+.reviews-empty button { padding:10px 15px; border:1px solid #6f675e; background:none; font-size:8px; font-weight:800; text-transform:uppercase; }
 .newsletter { padding:75px 20px; text-align:center; background:#a44e34; color:#fff8ef; }
 .newsletter>span { font-size:9px; letter-spacing:2px; }
 .newsletter h2 { margin:12px 0 8px; font:700 42px var(--font-cormorant); letter-spacing:-1.3px; }
@@ -527,6 +532,52 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .review-admin-list footer button { height:34px; padding:0 12px; border:1px solid #81796f; background:#fff; font-size:7px; text-transform:uppercase; }
 @media(max-width:900px) { .catalog-admin-grid { grid-template-columns:1fr; }.review-admin-list { grid-template-columns:1fr 1fr; }.product-template-grid { grid-template-columns:1fr 1fr; } }
 @media(max-width:600px) { .stock-editor,.media-editor,.file-media-editor,.review-admin-list,.product-editor-grid,.product-template-grid { grid-template-columns:1fr; }.product-editor-grid label.wide { grid-column:auto; } }
+
+/* Admin business analytics */
+.analytics-page { min-height:100vh; background:#eeeae2; color:#29251f; }
+.analytics-shell { padding:42px 4vw 70px; }
+.analytics-title { margin-bottom:26px; }
+.analytics-title small,.analytics-panel header>small { color:#a34f34; font-size:8px; font-weight:800; letter-spacing:1.5px; }
+.analytics-title h1 { margin:8px 0; font:600 clamp(38px,4vw,58px)/1 var(--font-cormorant); }
+.analytics-title p,.analytics-panel header p { margin:0; color:#716960; font-size:9px; line-height:1.6; }
+.analytics-cards { display:grid; grid-template-columns:repeat(3,1fr); margin-bottom:22px; border:1px solid #d4cdc2; background:#d4cdc2; gap:1px; }
+.analytics-cards article { min-height:135px; padding:24px; background:#fbf9f5; display:flex; flex-direction:column; justify-content:center; }
+.analytics-cards small { color:#81786f; font-size:7px; font-weight:800; letter-spacing:1.2px; }
+.analytics-cards b { margin:10px 0 8px; font:600 31px var(--font-cormorant); }
+.analytics-cards b.loss { color:#a84232; }
+.analytics-cards span { color:#7e756c; font-size:8px; }
+.analytics-warning { margin-bottom:22px; padding:13px 16px; border-left:4px solid #a34f34; background:#f4ddc0; font-size:9px; }
+.analytics-grid { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(330px,.6fr); gap:22px; align-items:start; }
+.analytics-panel { background:#fbf9f5; border:1px solid #d4cdc2; }
+.analytics-panel>header { padding:24px; border-bottom:1px solid #ddd6cc; }
+.analytics-panel h2 { margin:7px 0 4px; font:600 28px var(--font-cormorant); }
+.analytics-panel header a { display:inline-block; margin-top:10px; border-bottom:1px solid #a34f34; color:#a34f34; font-size:8px; }
+.analytics-table { overflow:auto; }
+.analytics-row { min-width:630px; display:grid; grid-template-columns:minmax(230px,1.8fr) repeat(3,minmax(90px,.65fr)); align-items:center; border-top:1px solid #e3ddd4; }
+.analytics-row:first-child { border-top:0; }
+.analytics-row>span { padding:13px 16px; font-size:9px; }
+.analytics-row>span:not(:first-child) { text-align:right; }
+.analytics-row b,.analytics-row small { display:block; }
+.analytics-row small { margin-top:4px; color:#857c72; font-size:7px; }
+.analytics-row--head { background:#2c2924; color:#fff; text-transform:uppercase; letter-spacing:.8px; }
+.analytics-row--head span { font-size:7px; }
+.analytics-row .stock-low { color:#a84232; font-weight:800; }
+.analytics-settings { padding:22px; display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+.analytics-settings label { display:grid; gap:6px; }
+.analytics-settings label>span { color:#746c63; font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; }
+.analytics-settings label>div { height:42px; display:flex; align-items:center; border:1px solid #cec7bc; background:#fff; }
+.analytics-settings i { width:30px; text-align:center; color:#8a8178; font-size:9px; font-style:normal; }
+.analytics-settings input { width:100%; height:100%; padding:0 8px; border:0; outline:0; font-weight:700; }
+.analytics-settings button { grid-column:1/-1; height:44px; border:0; background:#2c2924; color:#fff; font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:1px; }
+.analytics-integrations { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin-top:22px; border:1px solid #d4cdc2; background:#d4cdc2; }
+.analytics-integrations>div { padding:20px; background:#fbf9f5; }
+.analytics-integrations small,.analytics-integrations b,.analytics-integrations span { display:block; }
+.analytics-integrations small { color:#a34f34; font-size:7px; letter-spacing:1px; }
+.analytics-integrations b { margin:8px 0 4px; font:600 21px var(--font-cormorant); }
+.analytics-integrations span { color:#7b736a; font-size:8px; }
+.analytics-integrations>p { grid-column:1/-1; margin:0; padding:13px 18px; background:#ebe4d9; color:#6d655c; font-size:8px; }
+@media(max-width:1000px) { .analytics-grid { grid-template-columns:1fr; }.analytics-cards { grid-template-columns:1fr 1fr; } }
+@media(max-width:620px) { .analytics-shell { padding:26px 12px 50px; }.analytics-cards,.analytics-integrations { grid-template-columns:1fr; }.analytics-settings { grid-template-columns:1fr; }.analytics-integrations>p { grid-column:auto; } }
 
 /* Seller profit calculator */
 .calculator-page { min-height:100vh; background:#eeeae2; color:#29251f; }

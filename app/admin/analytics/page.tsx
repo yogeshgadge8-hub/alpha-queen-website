@@ -1,0 +1,35 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+type Settings = { gstRate: number; packagingPerOrder: number; courierPerOrder: number; gatewayRate: number; gatewayGstRate: number; adsPerOrder: number; softwarePerOrder: number; otherPerOrder: number };
+type Analytics = {
+  generatedAt: string; settings: Settings;
+  totals: { totalOrders: number; paidOrders: number; pendingOrders: number; lifetimeRevenue: number; lifetimeNetProfit: number; monthOrders: number; monthPaidOrders: number; monthRevenue: number; monthNetProfit: number; availableStock: number; inventoryCostValue: number; missingCostOrders: number };
+  products: Array<{ id: number; name: string; sellingPrice: number; purchaseCost: number; stock: number; lowStockThreshold: number; active: boolean; stockValue: number }>;
+  integrations: { smtp: boolean; emailOtp: boolean; paymentGateway: boolean; paymentProvider: string };
+};
+
+const money = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value || 0);
+const fields: Array<{ key: keyof Settings; label: string; suffix: string }> = [
+  { key: "gstRate", label: "Product GST rate", suffix: "%" }, { key: "packagingPerOrder", label: "Packaging / paid order", suffix: "₹" },
+  { key: "courierPerOrder", label: "Courier / paid order", suffix: "₹" }, { key: "gatewayRate", label: "Payment gateway rate", suffix: "%" },
+  { key: "gatewayGstRate", label: "GST on gateway fee", suffix: "%" }, { key: "adsPerOrder", label: "Advertising / paid order", suffix: "₹" },
+  { key: "softwarePerOrder", label: "Software / agent per order", suffix: "₹" }, { key: "otherPerOrder", label: "Other cost / paid order", suffix: "₹" },
+];
+
+export default function AnalyticsPage() {
+  const [data, setData] = useState<Analytics | null>(null); const [settings, setSettings] = useState<Settings | null>(null); const [message, setMessage] = useState("Loading live business data…");
+  const load = useCallback(async () => { const response = await fetch("/api/admin/analytics", { cache: "no-store" }); const body = await response.json() as Analytics & { error?: string }; if (!response.ok) { setMessage(body.error ?? "Unable to load analytics"); return; } setData(body); setSettings(body.settings); setMessage(""); }, []);
+  useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 30000); return () => window.clearInterval(timer); }, [load]);
+  const save = async () => { if (!settings) return; setMessage("Saving costs…"); const response = await fetch("/api/admin/analytics", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(settings) }); const body = await response.json() as Analytics & { error?: string }; if (!response.ok) { setMessage(body.error ?? "Unable to save costs"); return; } setData(body); setSettings(body.settings); setMessage("Costs saved. Profit analytics recalculated."); };
+  const totals = data?.totals;
+  return <main className="analytics-page"><header className="orders-header"><div><a href="/" className="orders-logo">ALPHA QUEEN<span>business analytics</span></a><p>Sales, revenue, profit and inventory from live orders.</p></div><div><a href="/admin/orders">Order desk</a><a href="/admin/catalog">Products & content</a><a href="/profit-calculator">Profit calculator</a></div></header>
+    <section className="analytics-shell"><div className="analytics-title"><small>LIVE BUSINESS OVERVIEW</small><h1>Sales, profit & stock</h1><p>Paid ordersवर revenue आणि saved purchase/operating costsवर estimated net profit. Data दर 30 seconds refresh होतो.</p></div>{message && <div className="catalog-message">{message}</div>}
+      <div className="analytics-cards"><article><small>THIS MONTH SALES</small><b>{money(totals?.monthRevenue ?? 0)}</b><span>{totals?.monthPaidOrders ?? 0} paid · {totals?.monthOrders ?? 0} total orders</span></article><article><small>MONTHLY NET PROFIT</small><b className={(totals?.monthNetProfit ?? 0) < 0 ? "loss" : ""}>{money(totals?.monthNetProfit ?? 0)}</b><span>After GST, product and saved order costs</span></article><article><small>TOTAL REVENUE</small><b>{money(totals?.lifetimeRevenue ?? 0)}</b><span>{totals?.paidOrders ?? 0} paid orders</span></article><article><small>AVAILABLE STOCK</small><b>{totals?.availableStock ?? 0}</b><span>Cost value {money(totals?.inventoryCostValue ?? 0)}</span></article><article><small>LIFETIME NET PROFIT</small><b className={(totals?.lifetimeNetProfit ?? 0) < 0 ? "loss" : ""}>{money(totals?.lifetimeNetProfit ?? 0)}</b><span>Estimated from saved costs</span></article><article><small>PAYMENT PENDING</small><b>{totals?.pendingOrders ?? 0}</b><span>Orders awaiting payment confirmation</span></article></div>
+      {(totals?.missingCostOrders ?? 0) > 0 && <div className="analytics-warning">{totals?.missingCostOrders} monthly paid order(s) contain products without purchase cost. Add purchase cost in Products & content for correct profit.</div>}
+      <div className="analytics-grid"><section className="analytics-panel"><header><small>PRODUCT INVENTORY</small><h2>Available stock & value</h2><a href="/admin/catalog">Edit products, costs, images & stock →</a></header><div className="analytics-table"><div className="analytics-row analytics-row--head"><span>Product</span><span>Purchase</span><span>Stock</span><span>Stock value</span></div>{data?.products.map((product) => <div className="analytics-row" key={product.id}><span><b>{product.name}</b><small>{product.active ? "Live" : "Inactive draft"} · Selling {money(product.sellingPrice)}</small></span><span>{money(product.purchaseCost)}</span><span className={product.stock <= product.lowStockThreshold ? "stock-low" : ""}>{product.stock}</span><span>{money(product.stockValue)}</span></div>)}</div></section>
+        <section className="analytics-panel"><header><small>NET PROFIT SETTINGS</small><h2>Actual operating costs</h2><p>हे costs save केल्यावर monthly आणि lifetime profit automatic बदलतो.</p></header>{settings && <div className="analytics-settings">{fields.map((field) => <label key={field.key}><span>{field.label}</span><div><i>{field.suffix}</i><input type="number" min="0" step="0.01" value={settings[field.key]} onChange={(event) => setSettings((current) => current ? { ...current, [field.key]: Number(event.target.value) || 0 } : current)} /></div></label>)}<button onClick={() => void save()}>Save costs & recalculate</button></div>}</section></div>
+      <section className="analytics-integrations"><div><small>SMTP EMAIL</small><b>{data?.integrations.smtp ? "Active" : "Setup required"}</b><span>Email delivery credentials</span></div><div><small>EMAIL OTP</small><b>{data?.integrations.emailOtp ? "Active" : "Setup required"}</b><span>SMTP + secure OTP secret</span></div><div><small>PAYMENT GATEWAY</small><b>{data?.integrations.paymentGateway ? "Active" : "Setup required"}</b><span>{data?.integrations.paymentProvider ?? "Not configured"}</span></div><p>Credentials chatमध्ये पाठवू नका. Provider account तयार झाल्यावर Hostinger Environment Variablesमध्ये secrets add करायचे.</p></section>
+    </section></main>;
+}

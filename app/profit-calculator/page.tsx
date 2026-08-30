@@ -94,13 +94,13 @@ export default function ProfitCalculator() {
           response = await fetch("/api/catalog", { cache: "no-store" });
           includesInactive = false;
         }
-        const data = await response.json() as { products?: Array<{ id: number; name: string; price: number; active?: boolean }>; error?: string };
+        const data = await response.json() as { products?: Array<{ id: number; name: string; price: number; purchaseCost?: number; active?: boolean }>; error?: string };
         if (!response.ok) throw new Error(data.error ?? "Unable to load products");
         const products = (data.products ?? []).map((product) => ({
           id: String(product.id),
           name: product.name,
           price: Number(product.price),
-          sampleCost: sampleCosts[product.name] ?? 0,
+          sampleCost: Number(product.purchaseCost ?? sampleCosts[product.name] ?? 0),
           active: product.active,
         }));
         if (!products.length) throw new Error("No catalog products found");

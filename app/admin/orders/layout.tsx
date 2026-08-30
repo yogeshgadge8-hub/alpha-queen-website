@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 
 export default async function OrdersLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const admin = await requireAdmin("/admin/orders");
-  return <><div className="admin-session-bar"><span>Signed in as <b>{admin.username}</b></span><div><a href="/admin/settings">Change password</a><form action="/api/admin/logout" method="post"><button>Logout</button></form></div></div>{children}</>;
+  return <><div className="admin-session-bar"><span>Signed in as <b>{admin.username}</b></span><div><a href="/admin/analytics">Analytics</a><a href="/admin/catalog">Products & content</a><a href="/admin/settings">Change password</a><form action="/api/admin/logout" method="post"><button>Logout</button></form></div></div>{children}</>;
 }
