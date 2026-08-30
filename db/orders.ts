@@ -80,7 +80,8 @@ export async function createOrder(input: OrderInput): Promise<OrderRecord> {
       if (stock < item.qty) throw new Error(`${item.name} has only ${stock} unit(s) in stock`);
     }
   }
-  const id = `AQ-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+  const uniqueSuffix = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+  const id = `AQ-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${uniqueSuffix}`;
   const subtotal = input.items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = input.shipping ?? 0;
   const total = subtotal + shipping;
