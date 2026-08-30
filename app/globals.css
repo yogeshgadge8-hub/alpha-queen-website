@@ -671,15 +671,15 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .store-benefit-banner small { color:#d8d3d4; font-size:8px; }
 .store-benefit-banner button { flex:none; min-width:135px; height:36px; border:1px solid #ff713b; border-radius:10px; background:#f45113; color:#fff; font-size:8px; font-weight:800; text-transform:uppercase; cursor:pointer; }
 .storefront .hero { width:min(1760px,calc(100% - 8vw)); min-height:540px; margin:0 auto; grid-template-columns:45% 55%; border:0; border-radius:24px; background:#fff; box-shadow:0 10px 35px rgba(17,17,17,.09); }
-.storefront .hero-copy { padding:75px 5vw 58px; background:#111; color:#fff; }
+.storefront .hero-copy { padding:75px 5vw 58px; background:linear-gradient(135deg,#f4fbf9,#fff8f3); color:#29251f; }
 .storefront .hero-copy h1 { margin:17px 0 20px; font-size:clamp(43px,4.2vw,66px); }
-.storefront .hero-copy>p,.storefront .hero-copy .trust-row { color:#c9c5c3; }
+.storefront .hero-copy>p,.storefront .hero-copy .trust-row { color:#625c54; }
 .storefront h1 em,.storefront h2 em { color:#f45113; }
 .storefront .eyebrow,.storefront .kicker { color:#f45113; }
 .storefront .eyebrow span { background:#f45113; }
 .storefront .primary { border-radius:10px; background:#f45113; }
 .storefront .primary:hover { background:#d9430d; }
-.storefront .hero-buttons>a { color:#fff; border-color:#8d8784; }
+.storefront .hero-buttons>a { color:#29251f; border-color:#877d72; }
 .storefront .hero-art { min-height:540px; background:linear-gradient(135deg,#dff8f1,#f9dce8); }
 .storefront .sun-disc { background:#fff1e9; }
 .storefront .category-section { padding:45px 4vw 55px; }
