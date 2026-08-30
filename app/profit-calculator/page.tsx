@@ -117,7 +117,11 @@ export default function ProfitCalculator() {
 
   const selectProduct = (id: string) => {
     setProductId(id);
-    if (id === "manual") return;
+    if (id === "manual") {
+      setManualProductName("");
+      setInputs((current) => ({ ...current, sellingPrice: 0, productCost: 0 }));
+      return;
+    }
     const product = catalog.find((item) => item.id === id);
     if (!product) return;
     setInputs((current) => ({ ...current, sellingPrice: product.price, productCost: product.sampleCost }));
