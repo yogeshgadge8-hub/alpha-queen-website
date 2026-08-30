@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+// The storefront changes frequently while products and launch content are being prepared.
+// Rendering dynamically prevents Hostinger's CDN from caching HTML that points to removed
+// versioned CSS/JS assets after a new deployment.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://alphaqueenofficial.com"),
   title: "Alpha Queen Cosmetics — Everyday Beauty, Made for Your Glow",
