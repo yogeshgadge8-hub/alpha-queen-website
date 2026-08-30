@@ -116,13 +116,8 @@ export default function Home() {
           </div>
           <div className="trust-row"><span>✓ Secure prepaid checkout</span><span>◎ Pan-India delivery plan</span><span>♻ Carefully packed</span></div>
         </div>
-        <div className="hero-art" aria-label="Alpha Queen body wash product display">
-          <div className="sun-disc" />
-          <div className="hero-leaf hero-leaf--left" />
-          <div className="hero-leaf hero-leaf--right" />
-          <div className="stone stone--back" />
-          <div className="stone stone--front" />
-          {storeProducts[0] && <ProductVisual product={storeProducts[0]} state={catalogState.find((item) => item.productId === storeProducts[0].id)} large />}
+        <div className="hero-art hero-art--real" aria-label="Alpha Queen body scrub collection">
+          <img className="hero-real-product" src="/images/alpha-queen-scrub-hero.png" alt="Alpha Queen citrus, coffee, rose and charcoal body scrubs" />
           <div className="hero-note"><b>01</b><span>Beauty rituals<br />made simple</span></div>
         </div>
       </section>
