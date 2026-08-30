@@ -772,7 +772,9 @@ footer a, footer p { font-size:9px; color:#bdb6ab; }
 .storefront .promise-copy h2 { color:#d65316; }
 .storefront .reviews { background:#fff0e6; }
 .storefront .newsletter { background:#ed6b21; }
-.storefront footer,.storefront .legal { background:#9f3609; }
+.storefront footer { background:#d65a1b; color:#fff; }
+.storefront footer>div:first-child>p,.storefront footer a,.storefront footer p { color:#fff4ed; }
+.storefront .legal { background:#bd430e; color:#fff4ed; }
 
 @media(max-width:1180px) {
   .storefront .header { grid-template-columns:auto minmax(280px,1fr) auto; }
