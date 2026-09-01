@@ -89,6 +89,8 @@ h1 em,h2 em { color:var(--terracotta); font-weight:700; font-style:normal; }
 .filters button { border:0; border-bottom:2px solid transparent; background:none; padding:10px 13px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; cursor:pointer; }
 .filters button.active { color:var(--terracotta); border-color:var(--terracotta); }
 .result-note { font-size:12px; margin-top:-20px; color:#6a6259; }
+.inventory-alert { margin:-8px 0 24px; padding:13px 15px; display:flex; align-items:center; justify-content:space-between; gap:15px; border:1px solid #d9a98f; background:#fff5ef; color:#6f2f16; font-size:11px; }
+.inventory-alert button { flex:none; border:0; border-bottom:1px solid; background:none; color:#b94918; font-size:9px; font-weight:800; text-transform:uppercase; cursor:pointer; }
 .product-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
 .product-card { background:#faf8f3; }
 .product-image { position:relative; background:#e4ded3; cursor:pointer; overflow:hidden; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { categories, products, type Product } from "@/lib/catalog";
 
 type PublicReview = { id: number; customerName: string; rating: number; title: string; text: string; mediaUrl: string; mediaType: "image" | "video"; createdAt: string };
@@ -32,14 +32,30 @@ export default function Home() {
   const [selected, setSelected] = useState<Product | null>(null);
   const [toast, setToast] = useState("");
   const [catalogState, setCatalogState] = useState<CatalogState[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
   const [storeProducts, setStoreProducts] = useState<Product[]>(products);
   const [reviewFile, setReviewFile] = useState<File | null>(null);
   const [review, setReview] = useState({ orderId: "", mobile: "", customerName: "", rating: "5", title: "", text: "", mediaUrl: "" });
 
-  useEffect(() => {
-    const loadCatalog = async () => { const response = await fetch("/api/catalog", { cache: "no-store" }); const data = await response.json() as { products?: Product[]; catalog?: CatalogState[] }; if (response.ok) { setStoreProducts(data.products ?? []); setCatalogState(data.catalog ?? []); } };
-    void loadCatalog(); const timer = window.setInterval(() => void loadCatalog(), 30_000); return () => window.clearInterval(timer);
+  const loadCatalog = useCallback(async () => {
+    try {
+      const response = await fetch("/api/catalog", { cache: "no-store" });
+      const data = await response.json() as { products?: Product[]; catalog?: CatalogState[]; error?: string };
+      if (!response.ok || !Array.isArray(data.products) || !Array.isArray(data.catalog)) throw new Error(data.error ?? "Inventory response is incomplete");
+      setStoreProducts(data.products);
+      setCatalogState(data.catalog);
+      setCatalogError("");
+    } catch {
+      setCatalogError("Live stock could not be loaded. Please retry.");
+    } finally {
+      setCatalogLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadCatalog(); const timer = window.setInterval(() => void loadCatalog(), 30_000); return () => window.clearInterval(timer);
+  }, [loadCatalog]);
 
   const filtered = useMemo(() => storeProducts.filter((product) => {
     const matchesQuery = `${product.name} ${product.category} ${product.subtitle} ${product.concern}`.toLowerCase().includes(query.toLowerCase());
@@ -145,6 +161,7 @@ export default function Home() {
 
       <section className="shop-section" id="shop">
         <div className="section-heading"><div><span className="kicker">ALPHA QUEEN STORE</span><h2>Best Selling Products</h2></div><div className="filters">{storeCategories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
+        {catalogError && <div className="inventory-alert" role="alert"><span>{catalogError}</span><button onClick={() => { setCatalogLoading(true); void loadCatalog(); }}>Retry stock check</button></div>}
         {query && <p className="result-note">Showing {filtered.length} result{filtered.length !== 1 ? "s" : ""} for “{query}”</p>}
         <div className="product-grid">
           {filtered.map((product) => (
@@ -155,7 +172,7 @@ export default function Home() {
                 <ProductVisual product={product} state={catalogState.find((item) => item.productId === product.id)} />
                 <span className="quick-view">Quick view</span>
               </div>
-              {(() => { const state = catalogState.find((item) => item.productId === product.id); const inStock = Boolean(state && state.stock > 0); return <div className="product-info"><div className="rating"><span>{state?.reviewCount ? "★★★★★" : "☆☆☆☆☆"}</span> {state?.reviewCount ? `${state.rating} (${state.reviewCount})` : "No reviews yet"}</div><small>{product.category} · {product.size}</small><h3>{product.name}</h3><p>{product.subtitle}</p><p className="concern">For {product.concern}</p><div className="price"><b>₹{product.price}</b>{product.oldPrice && <del>₹{product.oldPrice}</del>}<span>incl. taxes</span></div><em className={`stock-note ${!inStock ? "stock-note--out" : state && state.stock <= state.lowStockThreshold ? "stock-note--low" : ""}`}>{!state ? "Checking stock…" : !inStock ? "Out of stock" : state.stock <= state.lowStockThreshold ? `Only ${state.stock} remaining` : `In stock · ${state.stock} available`}</em><button disabled={!inStock} onClick={() => addToCart(product)}>{inStock ? "Add to cart" : "Unavailable"} <span>{inStock ? "＋" : "×"}</span></button><button className="review-link" onClick={() => setSelected(product)}>★ Ratings, reviews & photos</button></div>; })()}
+              {(() => { const state = catalogState.find((item) => item.productId === product.id); const stockFailed = !catalogLoading && Boolean(catalogError || !state); const inStock = Boolean(!catalogLoading && !catalogError && state && state.stock > 0); const stockText = catalogLoading ? "Checking stock…" : stockFailed ? "Stock check unavailable" : !inStock ? "Out of stock" : state && state.stock <= state.lowStockThreshold ? `Only ${state.stock} remaining` : `In stock · ${state?.stock ?? 0} available`; return <div className="product-info"><div className="rating"><span>{state?.reviewCount ? "★★★★★" : "☆☆☆☆☆"}</span> {state?.reviewCount ? `${state.rating} (${state.reviewCount})` : "No reviews yet"}</div><small>{product.category} · {product.size}</small><h3>{product.name}</h3><p>{product.subtitle}</p><p className="concern">For {product.concern}</p><div className="price"><b>₹{product.price}</b>{product.oldPrice && <del>₹{product.oldPrice}</del>}<span>incl. taxes</span></div><em className={`stock-note ${!inStock ? "stock-note--out" : state && state.stock <= state.lowStockThreshold ? "stock-note--low" : ""}`}>{stockText}</em><button disabled={catalogLoading || (!stockFailed && !inStock)} onClick={() => { if (stockFailed) { setCatalogLoading(true); void loadCatalog(); } else addToCart(product); }}>{stockFailed ? "Retry stock" : inStock ? "Add to cart" : catalogLoading ? "Checking…" : "Out of stock"} <span>{stockFailed ? "↻" : inStock ? "＋" : "×"}</span></button><button className="review-link" onClick={() => setSelected(product)}>★ Ratings, reviews & photos</button></div>; })()}
             </article>
           ))}
         </div>
@@ -171,7 +188,7 @@ export default function Home() {
 
       <section className="newsletter"><span>ALPHA QUEEN LAUNCH LIST</span><h2>Be first to know.</h2><p>New products, launch dates and prepaid offers in your inbox.</p><form onSubmit={(e) => { e.preventDefault(); setToast("You are on the Alpha Queen launch list"); }}><input type="email" required aria-label="Email address" placeholder="Your email address" /><button>Notify me →</button></form></section>
 
-      <footer><div><button className="logo logo--footer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Alpha Queen home"><img src="/images/alpha-queen-logo-header.png" alt="Alpha Queen" /></button><p>Your focused online destination for everyday cosmetics.</p><b className="footer-connect-title">CONNECT WITH ALPHA QUEEN</b><div className="socials"><button type="button" onClick={() => showSocialLinkPending("Instagram")}>Instagram</button><button type="button" onClick={() => showSocialLinkPending("Facebook")}>Facebook</button><button type="button" onClick={() => showSocialLinkPending("YouTube")}>YouTube</button><button type="button" onClick={() => showSocialLinkPending("WhatsApp")}>WhatsApp Join</button></div></div><div><b>SHOP</b><a href="#shop">Body wash</a><a href="#shop">Body scrub</a><a href="#shop">Face care</a><a href="#shop">Gift sets</a></div><div><b>HELP</b><a href="mailto:care@alphaqueenofficial.com">Contact us</a><a href="/policies#shipping">Shipping policy</a><a href="/policies#returns">Return policy</a><a href="/policies#cancellation">Cancellation policy</a></div><div><b>ABOUT</b><a href="#story">Our story</a><a href="#story">Ingredients</a><a href="#story">Why Alpha Queen</a><a href="/admin/orders">Order desk</a></div><div className="footer-contact"><b>NEED HELP?</b><p>Mon–Sat, 10am–6pm IST</p><a href="mailto:care@alphaqueenofficial.com">care@alphaqueenofficial.com</a></div></footer>
+      <footer><div><button className="logo logo--footer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Alpha Queen home"><img src="/images/alpha-queen-logo-header.png" alt="Alpha Queen" /></button><p>Your focused online destination for everyday cosmetics.</p><b className="footer-connect-title">CONNECT WITH ALPHA QUEEN</b><div className="socials"><button type="button" onClick={() => showSocialLinkPending("Instagram")}>Instagram</button><button type="button" onClick={() => showSocialLinkPending("Facebook")}>Facebook</button><button type="button" onClick={() => showSocialLinkPending("YouTube")}>YouTube</button><button type="button" onClick={() => showSocialLinkPending("WhatsApp")}>WhatsApp Join</button></div></div><div><b>SHOP</b><a href="#shop">Body wash</a><a href="#shop">Body scrub</a><a href="#shop">Face care</a><a href="#shop">Gift sets</a></div><div><b>HELP</b><a href="mailto:care@alphaqueenofficial.com">Contact us</a><a href="/policies#shipping">Shipping policy</a><a href="/policies#returns">Return policy</a><a href="/policies#cancellation">Cancellation policy</a></div><div><b>ABOUT</b><a href="#story">Our story</a><a href="#story">Ingredients</a><a href="#story">Why Alpha Queen</a></div><div className="footer-contact"><b>NEED HELP?</b><p>Mon–Sat, 10am–6pm IST</p><a href="mailto:care@alphaqueenofficial.com">care@alphaqueenofficial.com</a></div></footer>
       <div className="legal"><span>© 2026 Alpha Queen. Preview storefront.</span><span><a href="/policies">Terms · Shipping · Returns</a></span><span>alphaqueenofficial.com</span></div>
 
       {toast && <div className="toast">✓ {toast}</div>}
